@@ -1,0 +1,17 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = "postgresql://jim:3264@localhost:5432/ellah-test"
+}
+
+model Link {
+  id      Int      @id @default(autoincrement())
+  name   String   @unique
+  link    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
