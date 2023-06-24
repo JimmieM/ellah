@@ -12,7 +12,6 @@ As developers, we often find ourselves repeating the same setup processes on mul
 -  Automatically add bash scripts and aliases to your bash profile, keeping your workflow consistent across devices. Whether a script needs to be executed on start or during terminal start, everything can be synced effortlessly.
 -  Execute scripts stored in the cloud directly from your command line.
 -  Easily add or remove resources with simple commands.
--  Manage multiple profiles, allowing you to quickly switch between different workflows. Just use `ellah profile mySecondProfile` to switch to a different set of scripts, aliases, images, etc.
 -  Keep your workflow consistent and efficient, no matter where you're coding from.
 
 ## Installation
@@ -54,7 +53,7 @@ ellah config aws bucket set bucketName [myBucket]
 ellah config aws bucket set region [myRegion]
 ```
 
-View your current config, all should be defined.
+View your current config, all keys should be defined.
 
 ```bash
 ellah config ls
@@ -71,7 +70,13 @@ ellah config export ./path/to/export
 After runnig import you'll be prompted to enter your password in order to decrypt the contents.
 
 ```bash
-ellah config import ./path/to/exported/config.enc
+ellah config import ./path/to/export/config.enc
+```
+
+View your imported config
+
+```bash
+ellah config ls
 ```
 
 ## How to Use
@@ -126,7 +131,7 @@ Here are some examples:
 -  To open the original source of a script:
 
    ```bash
-   ellah script open script.sh
+   ellah script origin script.sh
    ```
 
 -  To add a link (provide a unique link name for easier management):
@@ -163,11 +168,13 @@ For a complete list of commands and their explanations, please refer to the Comm
 You can expect to find the same actions for all entities.
 Actions include but are not limited to:
 
--  open
--  add
--  remove
--  rm
--  mv
+-  add (add a file or object)
+-  rm (remove a file or object)
+-  mv (move a file or object)
+-  open (open a file, link or object)
+-  origin (open origin file hosted on your file provider)
+-  cp (copy file or object)
+-  edit (edit file)
 
 ## Commands
 

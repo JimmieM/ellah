@@ -1,11 +1,5 @@
 import { exec } from 'child_process';
-import fs from 'fs';
-import os from 'os';
 import path from 'path';
-
-// Location of the config directory and file
-const baseDir = path.join(os.homedir(), '.ellah-cli');
-const syncPath = path.join(baseDir, '/synced');
 
 const getScriptExecutionOptions = (scriptPath: string) => {
    const extension = path.extname(scriptPath);
@@ -57,26 +51,6 @@ const toCommandStringByFileType = (scriptPath: string, args: any): string => {
    return command;
 };
 
-export const saveScriptToPath = (
-   entityPath: string,
-   filePath: string,
-   file: any,
-): string => {
-   const scriptPath = `${syncPath}/${entityPath}/${filePath}`;
-
-   try {
-      fs.mkdirSync(`${syncPath}/${entityPath}`, { recursive: true });
-   } catch (e) {
-      console.log('Cannot create folder ', e);
-   }
-   const x = fs.writeFileSync(scriptPath, file);
-
-   // Make the script executable
-   fs.chmodSync(scriptPath, '755');
-
-   return scriptPath;
-};
-
 export const executeScript = (
    scriptPath: string,
    args: any,
@@ -89,8 +63,6 @@ export const executeScript = (
       return Promise.reject(
          'Execution failed. Read logs above for more detailed information regarding what went wrong.',
       );
-
-   console.warn(args);
 
    const options = getScriptExecutionOptions(scriptPath);
 

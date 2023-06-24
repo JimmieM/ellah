@@ -3,12 +3,14 @@ import fs from 'fs';
 import mime from 'mime-types';
 import open from 'open';
 import path from 'path';
+import { executeBash } from '../bash/execute-bash.js';
 import { loadConfig } from '../config/user-config.js';
 import { UserConfig } from '../config/user-config.model.js';
 import { fileEditor } from '../editor/editor.js';
 import filebucket from '../file-bucket/index.js';
-import { executeScript, saveScriptToPath } from '../script/execute-script.js';
+import { executeScript } from '../script/execute-script.js';
 import { spinnerSuccess, stopSpinner, updateSpinnerText } from '../spinner.js';
+import { syncFile } from '../synced/sync-file.js';
 import { tempDir } from '../temp/temp-dir.js';
 import { writeFile } from '../util/file.util.js';
 
@@ -22,6 +24,10 @@ interface EntityCommand {
 }
 
 export const EntityCommands: EntityCommand = {
+   cat: {
+      identifiers: ['cat'],
+      args: '<file>',
+   },
    ls: {
       identifiers: ['ls', 'list'],
       args: '',
@@ -114,6 +120,7 @@ export const commandWithErrorHandlingAndMiddleware = (
             console.log();
 
             await cb(...args);
+            console.log();
 
             await cmdWithActions.onSuccess?.();
 
@@ -153,6 +160,7 @@ export const createBaseEntityCommands = (
    const hasOpen = commandsIncludes('open', commandsConfig);
    const hasOrigin = commandsIncludes('origin', commandsConfig);
    const hasExec = commandsIncludes('exec', commandsConfig);
+   const hasCat = commandsIncludes('cat', commandsConfig);
 
    if (!!hasLs)
       bindCommand(hasLs, async () => {
@@ -188,8 +196,6 @@ export const createBaseEntityCommands = (
 
    if (!!hasExec)
       bindCommand(hasExec, async (file: string, args: string) => {
-         updateSpinnerText('Processing ...');
-
          const response = await filebucket.Get(`${entity}/${file}`);
 
          if (!response.body) {
@@ -197,7 +203,7 @@ export const createBaseEntityCommands = (
             return;
          }
 
-         const scriptPath = saveScriptToPath(entity, file, response.body);
+         const scriptPath = syncFile(entity, file, response.body);
 
          const execute = await executeScript(scriptPath, args);
 
@@ -248,6 +254,26 @@ export const createBaseEntityCommands = (
             await filebucket.Delete(`${entity}/${filePath}`);
          },
       );
+
+   if (!!hasCat)
+      bindCommand(hasCat, async (filePath: string) => {
+         const response = await filebucket.Get(`${entity}/${filePath}`);
+
+         if (!response.body) {
+            console.warn('File not found ...');
+            return;
+         }
+
+         const scriptPath = syncFile(entity, filePath, response.body);
+
+         const resp = await executeBash(`cat ${scriptPath}`);
+
+         console.log(resp.output);
+
+         if (resp.error) {
+            console.warn(resp.error);
+         }
+      });
 
    if (!!hasAdd)
       bindCommand(hasAdd, async (file: string, name: string) => {
