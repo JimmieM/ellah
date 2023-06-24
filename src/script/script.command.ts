@@ -1,12 +1,23 @@
-import { baseEntityCommands, EntityCommand } from '../entity/base-commands';
+import {
+   createBaseEntityCommands,
+   EntityCommands,
+} from '../entity/base-commands.js';
+import { hasStorageConfig } from '../entity/entity-config-helpers.js';
 
-export const scriptCommand = baseEntityCommands('script', [
-   { command: EntityCommand.ls },
-   { command: EntityCommand.add },
-   { command: EntityCommand.edit },
-   { command: EntityCommand.exec },
-   { command: EntityCommand.mv },
-   { command: EntityCommand.open },
-   { command: EntityCommand.rm },
-   { command: EntityCommand.cp },
-]);
+const createScriptCommand = createBaseEntityCommands(
+   'script',
+   EntityCommands,
+   [
+      { command: 'ls' },
+      { command: 'add' },
+      { command: 'edit' },
+      { command: 'exec' },
+      { command: 'mv' },
+      { command: 'open' },
+      { command: 'rm' },
+      { command: 'cp' },
+   ],
+   hasStorageConfig,
+);
+
+export const scriptCommand = createScriptCommand.cmd;

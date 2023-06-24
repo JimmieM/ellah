@@ -1,43 +1,39 @@
-import { Command } from 'commander';
+import open from 'open';
+import {
+   createBaseEntityCommands,
+   EntityCommands,
+} from '../entity/base-commands.js';
+import { hasStorageConfig } from '../entity/entity-config-helpers.js';
+import { toUrlWithPrefix } from '../util/url.util.js';
 import { addLink } from './add-link.js';
 import { getLinkByName } from './get-link-by-name.js';
-import { getLinks } from './get-links.js';
-import { spinnerSuccess, stopSpinner, updateSpinnerText } from '../spinner.js';
-import open from 'open';
-import { toUrlWithPrefix } from '../util/url.util.js';
 
-export const linkCommand = new Command('link');
+const createLinkCommand = createBaseEntityCommands(
+   'link',
+   EntityCommands,
+   [{ command: 'ls' }, { command: 'mv' }, { command: 'rm' }],
+   hasStorageConfig,
+);
 
-linkCommand.command('ls').action(async () => {
-   updateSpinnerText('Processing ');
+// @override open command
+createLinkCommand.createSubCommand(
+   {
+      command: 'open',
+   },
+   async (name: string) => {
+      const linkObj = await getLinkByName(name);
 
-   const links = await getLinks();
+      await open(toUrlWithPrefix(linkObj.link));
+   },
+);
 
-   spinnerSuccess();
-   console.table(links);
-});
+createLinkCommand.createSubCommand(
+   {
+      command: 'add',
+   },
+   async (link: string, name: string) => {
+      await addLink({ link, name });
+   },
+);
 
-linkCommand.command('add <link> [name]').action(async (link, name) => {
-   updateSpinnerText('Processing ...');
-
-   await addLink({
-      link,
-      name,
-   });
-
-   spinnerSuccess(`${link} successfully added!`);
-});
-
-linkCommand.command('open <name>').action(async (name) => {
-   updateSpinnerText('Processing ...');
-
-   const link = await getLinkByName(name);
-
-   if (!link) {
-      stopSpinner();
-      return console.warn('Link not found.');
-   }
-
-   spinnerSuccess();
-   await open(toUrlWithPrefix(link));
-});
+export const linkCommand = createLinkCommand.cmd;

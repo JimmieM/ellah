@@ -3,89 +3,160 @@ import fs from 'fs';
 import mime from 'mime-types';
 import open from 'open';
 import path from 'path';
-import { loadConfig } from '../config/user-config';
-import { UserConfig } from '../config/user-config.model';
-import { fileEditor } from '../editor/editor';
-import filebucket from '../file-bucket';
-import { executeScript, saveScriptToPath } from '../script/execute-script';
-import { spinnerSuccess, stopSpinner, updateSpinnerText } from '../spinner';
-import { writeFile } from '../util/file.util';
+import { loadConfig } from '../config/user-config.js';
+import { UserConfig } from '../config/user-config.model.js';
+import { fileEditor } from '../editor/editor.js';
+import filebucket from '../file-bucket/index.js';
+import { executeScript, saveScriptToPath } from '../script/execute-script.js';
+import { spinnerSuccess, stopSpinner, updateSpinnerText } from '../spinner.js';
+import { tempDir } from '../temp/temp-dir.js';
+import { writeFile } from '../util/file.util.js';
 
-export enum EntityCommand {
-   ls,
-   rm,
-   exec,
-   open,
-   edit,
-   mv,
-   add,
-   cp,
+type EntityCommandIds = keyof typeof EntityCommands;
+
+interface EntityCommand {
+   [key: string]: {
+      identifiers: string[];
+      args?: string;
+   };
 }
 
+export const EntityCommands: EntityCommand = {
+   ls: {
+      identifiers: ['ls', 'list'],
+      args: '',
+   },
+   rm: {
+      identifiers: ['rm', 'del'],
+      args: '<file>',
+   },
+   exec: {
+      identifiers: ['exec', 'execute'],
+      args: '<file> [args...]',
+   },
+   origin: {
+      identifiers: ['origin', 'op'],
+      args: '<file>',
+   },
+   open: {
+      identifiers: ['open', 'op'],
+      args: '<file>',
+   },
+   edit: {
+      identifiers: ['edit', 'e'],
+      args: '<scriptPath>',
+   },
+   mv: {
+      identifiers: ['mv', 'move'],
+      args: '<filePath> <filePathDestination>',
+   },
+   add: {
+      identifiers: ['add'],
+      args: '<file> [name]',
+   },
+   cp: {
+      identifiers: ['cp', 'copy'],
+      args: '<file> <destination>',
+   },
+};
+
 export interface CommandWithActions {
-   command: EntityCommand;
+   command: EntityCommandIds;
    onSuccess?: () => Promise<void>;
-   onFail?: () => Promise<void>;
+   onFail?: (error: any) => Promise<void>;
 }
 
 const commandsIncludes = (
-   entity: EntityCommand,
+   entity: EntityCommandIds,
    commands: CommandWithActions[],
 ) => {
    return commands.find((command) => command.command === entity);
 };
 
-export const baseEntityCommands = (
+const throwIfRequiredConfigIsMissing = (
    entity: string,
-   commands: CommandWithActions[],
+   requiredConfig: ((config: UserConfig) => boolean) | undefined,
+   loadConfig: () => UserConfig,
+) => {
+   if (!requiredConfig) return;
+
+   const config = loadConfig();
+   const hasRequiredConfig = requiredConfig(config);
+
+   if (!hasRequiredConfig)
+      throw new Error(
+         `Missing configuration for ${entity}. In order to use most entities, you're required to set a file provider such as Amazon S3.`,
+      );
+};
+
+export const commandWithErrorHandlingAndMiddleware = (
+   cmd: Command,
+   entity: string,
+   entityCommands: EntityCommand,
    requiredConfig?: (config: UserConfig) => boolean,
-): Command => {
+) => {
+   return async (cmdWithActions: CommandWithActions, cb: any) => {
+      throwIfRequiredConfigIsMissing(entity, requiredConfig, loadConfig);
+
+      const commandArgs = entityCommands[cmdWithActions.command].args;
+      const commandIdentifiers =
+         entityCommands[cmdWithActions.command].identifiers;
+
+      const subCommand = cmd.command(`${commandIdentifiers[0]} ${commandArgs}`);
+
+      commandIdentifiers.slice(1).forEach((alias) => {
+         subCommand.alias(alias + ' ' + commandArgs);
+      });
+
+      subCommand.action(async (...args) => {
+         try {
+            updateSpinnerText('Processing ...');
+
+            await cb(...args);
+
+            await cmdWithActions.onSuccess?.();
+
+            spinnerSuccess();
+         } catch (error) {
+            stopSpinner();
+
+            console.warn(error);
+
+            await cmdWithActions.onFail?.(error);
+         }
+      });
+   };
+};
+
+export const createBaseEntityCommands = (
+   entity: string,
+   entityCommands: EntityCommand,
+   commandsConfig: CommandWithActions[],
+   requiredConfig?: (config: UserConfig) => boolean,
+) => {
    const entityCommand = new Command(entity);
 
-   const throwIfRequiredConfigIsMissing = (
-      requiredConfig: ((config: UserConfig) => boolean) | undefined,
-      loadConfig: () => UserConfig,
-   ) => {
-      if (!requiredConfig) return;
+   const bindCommand = commandWithErrorHandlingAndMiddleware(
+      entityCommand,
+      entity,
+      entityCommands,
+      requiredConfig,
+   );
 
-      const config = loadConfig();
-      const hasRequiredConfig = requiredConfig(config);
-
-      if (!hasRequiredConfig)
-         throw new Error(
-            `Missing configuration for ${entity}. In order to use most entities, you're required to set a file provider such as Amazon S3.`,
-         );
-   };
-
-   const withErrorHandlingAndMiddleware = (command: any) => {
-      return (name: string, ...args: any) => {
-         const subCommand = command.command(name);
-
-         throwIfRequiredConfigIsMissing(requiredConfig, loadConfig);
-
-         return subCommand.action(...args);
-      };
-   };
-
-   const bindCommand = withErrorHandlingAndMiddleware(entityCommand);
-
-   const hasLs = commandsIncludes(EntityCommand.ls, commands);
-   const hasRm = commandsIncludes(EntityCommand.rm, commands);
-   const hasAdd = commandsIncludes(EntityCommand.add, commands);
-   const hasEdit = commandsIncludes(EntityCommand.edit, commands);
-   const hasCp = commandsIncludes(EntityCommand.cp, commands);
-   const hasMv = commandsIncludes(EntityCommand.mv, commands);
-   const hasOpen = commandsIncludes(EntityCommand.open, commands);
-   const hasExec = commandsIncludes(EntityCommand.exec, commands);
+   const hasLs = commandsIncludes('ls', commandsConfig);
+   const hasRm = commandsIncludes('rm', commandsConfig);
+   const hasAdd = commandsIncludes('add', commandsConfig);
+   const hasEdit = commandsIncludes('edit', commandsConfig);
+   const hasCp = commandsIncludes('cp', commandsConfig);
+   const hasMv = commandsIncludes('mv', commandsConfig);
+   const hasOpen = commandsIncludes('open', commandsConfig);
+   const hasOrigin = commandsIncludes('origin', commandsConfig);
+   const hasExec = commandsIncludes('exec', commandsConfig);
 
    if (!!hasLs)
-      entityCommand.command('ls').action(async () => {
-         updateSpinnerText('Processing ...');
-
+      bindCommand(hasLs, async () => {
          const objects = await filebucket.ListObjects(entity);
-
-         await hasLs?.onSuccess?.();
-         spinnerSuccess();
+         console.warn('objects', objects);
 
          const table = objects.body.map((obj: any) => ({
             key: obj.Key,
@@ -98,88 +169,63 @@ export const baseEntityCommands = (
       });
 
    if (!!hasRm)
-      entityCommand.command('rm <file>').action(async (file) => {
-         updateSpinnerText(`Deleting file ${file} ...`);
-
+      bindCommand(hasRm, async (file: string) => {
          const response = await filebucket.Delete(`${entity}/${file}`);
-
-         await hasRm?.onSuccess?.();
-
-         spinnerSuccess();
-
          console.table(response);
       });
 
    if (!!hasCp)
-      entityCommand
-         .command('cp <file> <destination>')
-         .action(async (file, destination) => {
-            try {
-               updateSpinnerText('Processing ...');
+      bindCommand(hasCp, async (file: string, destination: string) => {
+         const response = await filebucket.Get(`${entity}/${file}`);
 
-               throwIfRequiredConfigIsMissing(requiredConfig, loadConfig);
+         if (!response.body) {
+            console.warn(`${entity} not found ...`);
 
-               const response = await filebucket.Get(`${entity}/${file}`);
+            return;
+         }
 
-               if (!response.body) {
-                  console.warn(`${entity} not found ...`);
-
-                  return;
-               }
-
-               await writeFile(destination, response.body);
-
-               await hasCp?.onSuccess?.();
-
-               console.log(`${entity} moved successfully ...`);
-            } catch (error) {
-               stopSpinner();
-               console.warn(`Failed to move ${entity} ...`);
-            }
-         });
+         await writeFile(destination, response.body);
+      });
 
    if (!!hasExec)
-      entityCommand
-         .command('exec <file> [args...]')
-         .action(async (file, args) => {
-            updateSpinnerText('Processing ...');
-
-            const response = await filebucket.Get(`${entity}/${file}`);
-
-            if (!response.body) {
-               console.warn('Script not found ...');
-               return;
-            }
-
-            const scriptPath = saveScriptToPath(entity, file, response.body);
-
-            const execute = await executeScript(scriptPath, args);
-
-            spinnerSuccess();
-
-            await hasExec?.onSuccess?.();
-            console.table(execute);
-         });
-
-   if (!!hasEdit)
-      entityCommand
-         .command('edit <scriptPath>')
-         .description('Edit a script')
-         .action(async (scriptPath) => {
-            const config = loadConfig();
-
-            await fileEditor(scriptPath, entity, config.editor.type);
-
-            await hasEdit?.onSuccess?.();
-         });
-
-   if (!!hasOpen)
-      entityCommand.command('open <file>').action(async (file) => {
+      bindCommand(hasExec, async (file: string, args: string) => {
          updateSpinnerText('Processing ...');
 
-         const response = await filebucket.GetDownloadUrl(`${entity}/${file}`);
+         const response = await filebucket.Get(`${entity}/${file}`);
 
-         spinnerSuccess();
+         if (!response.body) {
+            console.warn('Script not found ...');
+            return;
+         }
+
+         const scriptPath = saveScriptToPath(entity, file, response.body);
+
+         const execute = await executeScript(scriptPath, args);
+
+         console.table(execute);
+      });
+
+   if (!!hasEdit)
+      bindCommand(hasEdit, async (scriptPath: string) => {
+         const config = loadConfig();
+
+         await fileEditor(scriptPath, entity, config.editor.type);
+      });
+
+   if (!!hasOpen)
+      bindCommand(hasOpen, async (filePath: string) => {
+         const tempFile = path.join(tempDir, filePath);
+
+         const file = await filebucket.Get(path.join(entity, filePath));
+
+         writeFile(tempFile, file.body);
+
+         await open(tempFile);
+      });
+
+   if (!!hasOrigin)
+      bindCommand(hasOrigin, async (file: string) => {
+         const response = await filebucket.GetDownloadUrl(`${entity}/${file}`);
 
          if (!response) {
             console.warn('Link not available.');
@@ -189,39 +235,23 @@ export const baseEntityCommands = (
          console.log(`Opening ${file} ...`);
 
          await open(response);
-
-         await hasOpen?.onSuccess?.();
       });
 
    if (!!hasMv)
-      entityCommand
-         .command('mv <filePath> <filePathDestination>')
-         .action(async (filePath, filePathDestination) => {
-            try {
-               updateSpinnerText('Processing ...');
+      bindCommand(
+         hasMv,
+         async (filePath: string, filePathDestination: string) => {
+            await filebucket.Copy(
+               `${entity}/${filePathDestination}`,
+               `${entity}/${filePath}`,
+            );
 
-               await filebucket.Copy(
-                  `${entity}/${filePathDestination}`,
-                  `${entity}/${filePath}`,
-               );
-
-               await filebucket.Delete(`${entity}/${filePath}`);
-
-               spinnerSuccess();
-
-               await hasMv?.onSuccess?.();
-
-               console.log('File copied successfully.');
-            } catch (error) {
-               stopSpinner();
-               console.warn('Failed to copy script.');
-            }
-         });
+            await filebucket.Delete(`${entity}/${filePath}`);
+         },
+      );
 
    if (!!hasAdd)
-      entityCommand.command('add <file> [name]').action(async (file, name) => {
-         updateSpinnerText('Processing ...');
-
+      bindCommand(hasAdd, async (file: string, name: string) => {
          const fileBuffer = fs.readFileSync(file);
 
          const contentType = mime.contentType(file) as any;
@@ -235,12 +265,16 @@ export const baseEntityCommands = (
             filename: name || file,
          });
 
-         await hasAdd?.onSuccess?.();
-
-         spinnerSuccess();
-
          console.table(response);
       });
 
-   return entityCommand;
+   return {
+      createSubCommand: commandWithErrorHandlingAndMiddleware(
+         entityCommand,
+         entity,
+         entityCommands,
+         requiredConfig,
+      ),
+      cmd: entityCommand,
+   };
 };

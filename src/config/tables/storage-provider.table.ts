@@ -1,4 +1,4 @@
-import { StorageConfigUnion, StorageProvider } from '../user-config.model';
+import { StorageConfigUnion, StorageProvider } from '../user-config.model.js';
 
 export const storageProviderTable = (
    provider: string | undefined,

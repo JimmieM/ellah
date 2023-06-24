@@ -1,16 +1,17 @@
 {
-   "name": "ellah-cli",
-   "version": "1.0.0",
+   "name": "ellah",
+   "version": "1.0.1",
    "description": "ellah cli",
    "type": "module",
    "main": "index.js",
    "repository": {
-      "url": ""
+      "url": "https://github.com/JimmieM/ellah.git"
    },
    "scripts": {
       "build": "tsc",
       "prepare": "npm run build",
-      "start": "NODE_OPTIONS='--experimental-specifier-resolution=node' node dist/index.js",
+      "start:xp": "NODE_OPTIONS='--experimental-specifier-resolution=node' node dist/index.js",
+      "start": "node dist/index.js",
       "test:unit": "ENV_FILE=./config/.env.test jest",
       "test": "jest"
    },
@@ -20,7 +21,6 @@
    "author": "",
    "license": "ISC",
    "dependencies": {
-      "@prisma/client": "^4.16.0",
       "aws-sdk": "^2.1402.0",
       "chalk": "^5.2.0",
       "commander": "^11.0.0",

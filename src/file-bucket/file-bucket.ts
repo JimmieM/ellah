@@ -1,4 +1,4 @@
-import { EllahFile } from '../models/file.model';
+import { EllahFile } from '../models/file.model.js';
 
 export interface IFileBucketProvider {
    config: IFileBucketConfig;

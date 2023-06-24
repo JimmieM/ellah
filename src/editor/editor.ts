@@ -1,10 +1,10 @@
-import { getTemporaryFilePath } from './filepath';
-import filebucket from '../file-bucket';
+import { getTemporaryFilePath } from './filepath.js';
+import filebucket from '../file-bucket/index.js';
 import fs from 'fs';
 import { spawnSync } from 'child_process';
 import mime from 'mime-types';
 import path from 'path';
-import { DEFAULT_EDITOR } from '../default';
+import { DEFAULT_EDITOR } from '../default/index.js';
 
 export const fileEditor = async (
    scriptPath: string,

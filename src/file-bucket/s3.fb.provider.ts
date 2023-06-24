@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import { IFileBucketProvider, IFileBucketConfig } from './file-bucket';
+import { IFileBucketProvider, IFileBucketConfig } from './file-bucket.js';
 
 export class S3FileBucketProvider implements IFileBucketProvider {
    config: IFileBucketConfig;

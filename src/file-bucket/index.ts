@@ -1,6 +1,6 @@
-import { loadConfig } from '../config/user-config';
-import { FileBucket } from './file-bucket';
-import { S3FileBucketProvider } from './s3.fb.provider';
+import { loadConfig } from '../config/user-config.js';
+import { FileBucket } from './file-bucket.js';
+import { S3FileBucketProvider } from './s3.fb.provider.js';
 
 const config = loadConfig();
 

@@ -1,7 +1,7 @@
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
-import { bashProfilePath, reloadBashProfile } from '../bash/bash.util';
+import { bashProfilePath, reloadBashProfile } from '../bash/bash.util.js';
 
 const baseDir = path.join(os.homedir(), '.ellah-cli');
 

@@ -1,10 +1,9 @@
 import fs from 'fs';
-import { emptyUserConfig } from './empty-user-config';
-import { UserConfig } from './user-config.model';
+import { emptyUserConfig } from './empty-user-config.js';
+import { UserConfig } from './user-config.model.js';
 import path from 'path';
 import os from 'os';
 
-// Location of the config directory and file
 const configDir = path.join(os.homedir(), '.ellah-cli');
 const configPath = path.join(configDir, 'config.json');
 

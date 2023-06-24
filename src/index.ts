@@ -7,14 +7,19 @@ import { awsCommand } from './config/config.aws.command.js';
 import { dbCommand } from './config/config.db.command.js';
 import { editorCommand } from './config/config.editor.command.js';
 import { configCommand } from './config/config.command.js';
-
 import { linkCommand } from './link/link.command.js';
 import { scriptCommand } from './script/script.command.js';
 import { bashCommand } from './bash/bash.command.js';
+import { imageCommand } from './img/img.command.js';
 
 const program = new Command();
 program.description('Ellah CLI');
-program.version('0.0.1');
+program.version('1.0.0');
+
+program.addHelpCommand(
+   'help [cmd]',
+   'Need help with setup? https://github.com/JimmieM/ellah/tree/main',
+);
 
 /* CONFIG */
 program.addCommand(configCommand);
@@ -28,6 +33,9 @@ program.addCommand(scriptCommand);
 /* LINK */
 program.addCommand(linkCommand);
 
+/* IMAGE */
+program.addCommand(imageCommand);
+
 /* ALIAS */
 program.addCommand(aliasCommand);
 
@@ -37,5 +45,6 @@ program.addCommand(bashCommand);
 async function main() {
    await program.parseAsync(process.argv);
 }
+
 console.log(); // log a new line so there is a nice space
-main();
+await main();

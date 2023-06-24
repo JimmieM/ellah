@@ -1,4 +1,4 @@
-import { UserConfig } from './user-config.model';
+import { UserConfig } from './user-config.model.js';
 
 export const emptyUserConfig: UserConfig = {
    editor: {

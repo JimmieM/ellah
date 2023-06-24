@@ -1,7 +1,7 @@
-import { exec, spawn } from 'child_process';
+import { exec } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 
 // Location of the config directory and file
 const baseDir = path.join(os.homedir(), '.ellah-cli');
@@ -21,10 +21,8 @@ const getScriptExecutionOptions = (scriptPath: string) => {
 };
 
 const toCommandStringByFileType = (scriptPath: string, args: any): string => {
-   console.warn(args);
-
    const extension = path.extname(scriptPath);
-   // Execute the script based on file extension and passed arguments
+
    let command = '';
    switch (extension) {
       case '.bash':

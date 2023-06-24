@@ -1,7 +1,7 @@
-import { decrypt } from '../../crypto/aes-256.crypto';
-import getPassword from '../../input/get-password.prompt';
-import { readFile } from '../../util/file.util';
-import { saveConfig } from '../user-config';
+import { decrypt } from '../../crypto/aes-256.crypto.js';
+import getPassword from '../../input/get-password.prompt.js';
+import { readFile } from '../../util/file.util.js';
+import { saveConfig } from '../user-config.js';
 
 export const importConfig = async (filePath: string): Promise<void> => {
    return new Promise(async (resolve, reject) => {

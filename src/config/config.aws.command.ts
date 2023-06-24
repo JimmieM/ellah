@@ -1,5 +1,5 @@
-import { loadConfig, setConfig, saveConfig } from './user-config';
-import { configCommand } from './config.command';
+import { loadConfig, setConfig, saveConfig } from './user-config.js';
+import { configCommand } from './config.command.js';
 
 export const awsCommand = configCommand.command('aws');
 

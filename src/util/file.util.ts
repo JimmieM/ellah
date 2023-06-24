@@ -15,3 +15,14 @@ export const writeFile = (filePath: string, data: string): Promise<void> => {
          throw err; // Re-throw the error to allow higher level handling
       });
 };
+
+export const mkDir = async (dirPath: string) => {
+   try {
+      if (!(await fs.access(dirPath).catch(() => false))) {
+         await fs.mkdir(dirPath, { recursive: true });
+         console.log('Directory created:', dirPath);
+      }
+   } catch (error) {
+      console.error('Error creating directory:', error);
+   }
+};

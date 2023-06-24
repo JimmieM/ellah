@@ -1,6 +1,6 @@
-import filebucket from '../file-bucket';
+import filebucket from '../file-bucket/index.js';
 import { writeFile } from '../util/file.util.js';
-import { buildPath } from '../util/path.util';
+import { buildPath } from '../util/path.util.js';
 import { ellahAlias } from './alias.config.js';
 
 export const syncAliasDir = async (): Promise<void> => {

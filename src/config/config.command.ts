@@ -1,11 +1,11 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { exportConfig } from './export/export.config';
-import { importConfig } from './import/import.config';
-import { dbProviderTable } from './tables/db-provider.table';
-import { editorConfigTable } from './tables/editor-config.table';
-import { storageProviderTable } from './tables/storage-provider.table';
-import { loadConfig, saveConfig } from './user-config';
+import { exportConfig } from './export/export.config.js';
+import { importConfig } from './import/import.config.js';
+import { dbProviderTable } from './tables/db-provider.table.js';
+import { editorConfigTable } from './tables/editor-config.table.js';
+import { storageProviderTable } from './tables/storage-provider.table.js';
+import { loadConfig, saveConfig } from './user-config.js';
 
 export const configCommand = new Command('config');
 
@@ -48,9 +48,12 @@ configCommand
    });
 
 configCommand.command('export <dir>').action(async function (dir) {
-   await exportConfig(dir);
-
-   console.log('Config file has been encrypted and saved.');
+   try {
+      await exportConfig(dir);
+      console.log('Config file has been encrypted and saved.');
+   } catch (error) {
+      console.warn('Failed to export configuration file.');
+   }
 });
 
 configCommand

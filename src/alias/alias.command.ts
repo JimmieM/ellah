@@ -1,5 +1,8 @@
-import { baseEntityCommands, EntityCommand } from '../entity/base-commands.js';
-import { updateSpinnerText, spinnerSuccess, stopSpinner } from '../spinner.js';
+import {
+   createBaseEntityCommands,
+   EntityCommands,
+} from '../entity/base-commands.js';
+import { hasStorageConfig } from '../entity/entity-config-helpers.js';
 import { syncBashProfileWithAliasDir } from './sync-alias-bash-profile.js';
 import { syncAliasDir } from './sync-alias-dir.js';
 
@@ -8,26 +11,32 @@ const syncAliasDirAndBashProfile = async () => {
    await syncBashProfileWithAliasDir();
 };
 
-export const aliasCommand = baseEntityCommands('alias', [
-   { command: EntityCommand.ls },
-   { command: EntityCommand.add, onSuccess: syncAliasDirAndBashProfile },
-   { command: EntityCommand.edit, onSuccess: syncAliasDirAndBashProfile },
-   { command: EntityCommand.exec },
-   { command: EntityCommand.mv, onSuccess: syncAliasDirAndBashProfile },
-   { command: EntityCommand.open },
-   { command: EntityCommand.rm, onSuccess: syncAliasDirAndBashProfile },
-   { command: EntityCommand.cp, onSuccess: syncAliasDirAndBashProfile },
-]);
+const aliasEntityCommands = {
+   ...EntityCommands,
+   sync: {
+      identifiers: ['s', 'sync'],
+      args: '',
+   },
+};
 
-aliasCommand.command('sync').action(async () => {
-   try {
-      await syncAliasDirAndBashProfile();
-      updateSpinnerText('Processing ...');
-      console.log('File copied successfully.');
+const createAliasCommand = createBaseEntityCommands(
+   'alias',
+   aliasEntityCommands,
+   [
+      { command: 'ls' },
+      { command: 'add', onSuccess: syncAliasDirAndBashProfile },
+      { command: 'edit', onSuccess: syncAliasDirAndBashProfile },
+      { command: 'exec' },
+      { command: 'mv', onSuccess: syncAliasDirAndBashProfile },
+      { command: 'open' },
+      { command: 'rm', onSuccess: syncAliasDirAndBashProfile },
+      { command: 'cp', onSuccess: syncAliasDirAndBashProfile },
+   ],
+   hasStorageConfig,
+);
 
-      spinnerSuccess();
-   } catch (error) {
-      console.warn('Failed to copy script.');
-      stopSpinner();
-   }
+createAliasCommand.createSubCommand({ command: 'sync' }, async () => {
+   await syncAliasDirAndBashProfile();
 });
+
+export const aliasCommand = createAliasCommand.cmd;

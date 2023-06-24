@@ -1,4 +1,4 @@
-import { S3StorageCredentials } from './storage-providers/s3';
+import { S3StorageCredentials } from './storage-providers/s3.js';
 
 export const StorageProvider = {
    s3: 's3',
