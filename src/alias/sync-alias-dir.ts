@@ -1,7 +1,7 @@
 import filebucket from '../file-bucket/index.js';
-import { writeFile } from '../util/file.util.js';
+import { removeFilesInDir, writeFile } from '../util/file.util.js';
 import { buildPath } from '../util/path.util.js';
-import { ellahAlias } from './alias.config.js';
+import { ellahAliasDir } from './alias.config.js';
 
 export const syncAliasDir = async (): Promise<void> => {
    const res = await filebucket.ListObjects('alias');
@@ -10,10 +10,13 @@ export const syncAliasDir = async (): Promise<void> => {
       return;
    }
 
+   removeFilesInDir(ellahAliasDir);
+
    const createFilesPromises = res.body.map(async (obj: any) => {
       const file = await filebucket.Get(obj.Key);
       if (!file) return;
-      await writeFile(buildPath(ellahAlias, obj.Key), file.body);
+      const key = obj.Key.replace('alias/', '').replace('/alias/', '');
+      await writeFile(buildPath(ellahAliasDir, key), file.body);
    });
 
    await Promise.all(createFilesPromises);

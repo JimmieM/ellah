@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import { Dirent, promises as fs } from 'fs';
 import path from 'path';
 
 export const readFile = (filePath: string): Promise<string> => {
@@ -24,5 +24,22 @@ export const mkDir = async (dirPath: string) => {
       }
    } catch (error) {
       console.error('Error creating directory:', error);
+   }
+};
+
+export const removeFilesInDir = async (dir: string) => {
+   try {
+      const dirents: Dirent[] = await fs.readdir(dir, { withFileTypes: true });
+      for (const dirent of dirents) {
+         const filePath = path.join(dir, dirent.name);
+         if (dirent.isFile()) {
+            await fs.unlink(filePath);
+            console.log('File deleted:', filePath);
+         } else if (dirent.isDirectory()) {
+            console.log('Skipping directory:', filePath);
+         }
+      }
+   } catch (err) {
+      console.error('Error reading directory:', err);
    }
 };
