@@ -111,6 +111,7 @@ export const commandWithErrorHandlingAndMiddleware = (
       subCommand.action(async (...args) => {
          try {
             updateSpinnerText('Processing ...');
+            console.log();
 
             await cb(...args);
 
@@ -156,8 +157,6 @@ export const createBaseEntityCommands = (
    if (!!hasLs)
       bindCommand(hasLs, async () => {
          const objects = await filebucket.ListObjects(entity);
-         console.warn('objects', objects);
-
          const table = objects.body.map((obj: any) => ({
             key: obj.Key,
             lastModified: obj.LastModified,

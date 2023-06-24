@@ -20,7 +20,6 @@ export const mkDir = async (dirPath: string) => {
    try {
       if (!(await fs.access(dirPath).catch(() => false))) {
          await fs.mkdir(dirPath, { recursive: true });
-         console.log('Directory created:', dirPath);
       }
    } catch (error) {
       console.error('Error creating directory:', error);
