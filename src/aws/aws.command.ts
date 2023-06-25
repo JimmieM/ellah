@@ -27,7 +27,7 @@ export const setAwsCredentialsConfig = (
    return {
       ...config,
       storage: {
-         ...config.storage,
+         provider: 's3',
          config: {
             ...config.storage.config,
             credentials: {
