@@ -102,8 +102,6 @@ export const commandWithErrorHandlingAndMiddleware = (
    requiredConfig?: (config: UserConfig) => boolean,
 ) => {
    return async (cmdWithActions: CommandWithActions, cb: any) => {
-      throwIfRequiredConfigIsMissing(entity, requiredConfig, loadConfig);
-
       const commandArgs = entityCommands[cmdWithActions.command].args;
       const commandIdentifiers =
          entityCommands[cmdWithActions.command].identifiers;
@@ -116,6 +114,8 @@ export const commandWithErrorHandlingAndMiddleware = (
 
       subCommand.action(async (...args) => {
          try {
+            throwIfRequiredConfigIsMissing(entity, requiredConfig, loadConfig);
+
             updateSpinnerText('Processing ...');
             console.log();
 
