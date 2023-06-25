@@ -1,6 +1,6 @@
-import { IAM } from 'aws-sdk';
+import AWS from 'aws-sdk';
 
-const iam = new IAM();
+const iam = new AWS.IAM();
 
 export const createIAMUser = async (username: string): Promise<string> => {
    try {

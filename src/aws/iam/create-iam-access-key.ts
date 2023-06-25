@@ -1,7 +1,8 @@
-import { IAM } from 'aws-sdk';
+import AWS from 'aws-sdk';
+
 import { AccessKey } from 'aws-sdk/clients/iam';
 
-const iam = new IAM();
+const iam = new AWS.IAM();
 
 export const createAccessKeys = async (
    username: string,
