@@ -34,10 +34,7 @@ program.addHelpCommand(
 /* CONFIG */
 program.addCommand(configCommand);
 program.addCommand(awsCommand);
-program.addCommand(dbCommand);
-program.addCommand(editorCommand);
 program.addCommand(iamCommand);
-program.addCommand(localAwsCredentials);
 
 /* SCRIPT */
 program.addCommand(scriptCommand);

@@ -15,7 +15,7 @@ export const iamCommand = new Command('iam');
 export const bucketCommand = awsCommand.command('bucket');
 export const credentialsCommand = awsCommand.command('credentials');
 
-export const localAwsCredentials = credentialsCommand.command('profiles');
+export const localAwsCredentials = awsCommand.command('profile');
 
 export const setAwsCredentialsConfig = (
    config: UserConfig,
