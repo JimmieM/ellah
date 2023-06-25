@@ -37,10 +37,6 @@ export const syncBashProfileWithAliasDir = () => {
          return;
       }
 
-      console.warn('ADD');
-
-      console.warn(linesToAdd);
-
       const startMarker =
          ": <<'EOF'\n--- ELLAH START (do not add lines between start and end as these will be overriden. Instead use the CLI. ellah alias --help) ---";
       const endMarker = '--- ELLAH END ---\nEOF';

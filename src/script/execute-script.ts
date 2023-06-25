@@ -27,6 +27,7 @@ const toCommandStringByFileType = (scriptPath: string, args: any): string => {
          command = `python ${scriptPath}`;
          break;
       case '.js':
+      case '.ts':
          command = `node ${scriptPath}`;
          break;
       default:

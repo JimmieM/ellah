@@ -17,7 +17,7 @@ As developers, we often find ourselves repeating the same setup processes on mul
 ## Installation
 
 ```console
-npm install ellah
+npm install -g ellah
 ```
 
 ## Setup
@@ -29,6 +29,9 @@ ellah config ls
 ```
 
 Set your file provider. At the moment only Amazon S3 is supported.
+
+[Setup AWS access keys](https://docs.aws.amazon.com/powershell/latest/userguide/pstools-appendix-sign-up.html)
+
 \`\`bash
 ellah config set provider s3
 \`\`

@@ -5,7 +5,9 @@ import { buildPath } from '../../util/path.util.js';
 import { loadConfig } from '../user-config.js';
 
 export const exportConfig = async (dir: string): Promise<void> => {
-   const password = await getPassword();
+   const password = await getPassword(
+      'Enter a password to encrypt configuration file:',
+   );
 
    const config = loadConfig();
    const stringifiedConfig = JSON.stringify(config);

@@ -11,7 +11,12 @@ import { getLinkByName } from './get-link-by-name.js';
 const createLinkCommand = createBaseEntityCommands(
    'link',
    EntityCommands,
-   [{ command: 'ls' }, { command: 'mv' }, { command: 'rm' }],
+   [
+      { command: 'ls' },
+      { command: 'mv' },
+      { command: 'rm' },
+      { command: 'origin' },
+   ],
    hasStorageConfig,
 );
 

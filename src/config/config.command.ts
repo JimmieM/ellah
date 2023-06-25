@@ -12,7 +12,6 @@ export const configCommand = new Command('config');
 configCommand.command('ls').action(async () => {
    const config = loadConfig();
 
-   const dbTable = dbProviderTable(config.db);
    const storageTable = storageProviderTable(
       config?.storage.provider,
       config?.storage.config,
@@ -22,9 +21,6 @@ configCommand.command('ls').action(async () => {
 
    console.log(chalk.blueBright.bgWhite.bold('Storage'));
    console.table(storageTable);
-
-   console.log(chalk.blueBright.bgWhite.bold('DB'));
-   console.table(dbTable);
 
    console.log(chalk.blueBright.bgWhite.bold('Editor'));
    console.table(editorTable);

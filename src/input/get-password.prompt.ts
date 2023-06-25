@@ -1,11 +1,11 @@
 import inquirer, { QuestionCollection } from 'inquirer';
 
-const getPassword = async (): Promise<string> => {
+const getPassword = async (message?: string): Promise<string> => {
    const questions: QuestionCollection = [
       {
          name: 'password',
          type: 'password',
-         message: 'Enter your password:',
+         message: message ?? 'Enter your password:',
          validate: function (value: any) {
             if (value.length) {
                return true;
