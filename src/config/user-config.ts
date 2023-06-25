@@ -16,6 +16,7 @@ if (!fs.existsSync(configPath)) {
 export function loadConfig(): UserConfig {
    try {
       const data = fs.readFileSync(configPath, 'utf8');
+      if (!data) return emptyUserConfig;
       return JSON.parse(data);
    } catch (err) {
       console.error('Error loading state:', err);

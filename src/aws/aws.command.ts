@@ -129,21 +129,13 @@ localAwsCredentials
       try {
          const config = loadConfig();
 
-         const modifiedConfig: UserConfig = {
-            ...config,
-            storage: {
-               ...config.storage,
-               config: {
-                  ...config.storage.config,
-                  credentials: {
-                     secretAccessKey: profile.secretAccessKey,
-                     accessKeyId: profile.accessKeyId,
-                  },
-               },
-            },
-         };
+         const modifiedConfig = setAwsCredentialsConfig(config, {
+            accessKeyId: profile.accessKeyId!,
+            secretAccessKey: profile.secretAccessKey!,
+         });
 
          saveConfig(modifiedConfig);
+         console.log(`You're now using ${profileName} keys with Ellah`);
       } catch (error) {
          console.warn(
             'Failed to use configuration from ~/.aws/credentials:',
