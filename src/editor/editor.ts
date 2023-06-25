@@ -1,10 +1,11 @@
-import { getTemporaryFilePath } from './filepath.js';
-import filebucket from '../file-bucket/index.js';
-import fs from 'fs';
 import { spawnSync } from 'child_process';
+import fs from 'fs';
 import mime from 'mime-types';
 import path from 'path';
 import { DEFAULT_EDITOR } from '../default/index.js';
+import filebucket from '../file-bucket/index.js';
+import { tempDir } from '../temp/temp-dir.js';
+import { buildPath } from '../util/path.util.js';
 
 export const fileEditor = async (
    scriptPath: string,
@@ -13,7 +14,7 @@ export const fileEditor = async (
 ) => {
    const editor = _editor || DEFAULT_EDITOR;
 
-   const temporaryFilePath = getTemporaryFilePath(entityType, scriptPath);
+   const temporaryFilePath = buildPath(tempDir, entityType, scriptPath);
 
    const downloadRequest = await filebucket.GetWithReadStream(
       path.join(entityType, scriptPath),

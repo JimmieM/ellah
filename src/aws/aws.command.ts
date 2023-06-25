@@ -7,10 +7,11 @@ import {
 } from './iam/get-local-credential-config.js';
 import { loadConfig, saveConfig, setConfig } from '../config/user-config.js';
 import { UserConfig } from '../config/user-config.model.js';
+import { listProfiles } from './iam/list-iam.js';
 
 export const awsCommand = new Command('aws');
 
-export const iamCommand = new Command('iam');
+export const iamCommand = awsCommand.command('iam');
 
 export const bucketCommand = awsCommand.command('bucket');
 export const credentialsCommand = awsCommand.command('credentials');
@@ -40,13 +41,26 @@ export const setAwsCredentialsConfig = (
 };
 
 iamCommand
-   .command('create <userName>')
+   .command('add <userName>')
    .description('create an AWS IAM profile')
    .action(async (userName) => {
       try {
          const createdUserName = await createIAMUser(userName);
 
          console.log('IAM user created:', createdUserName);
+      } catch (error) {
+         console.error('Error creating IAM user:', error);
+      }
+   });
+
+iamCommand
+   .command('ls')
+   .description('list your IAM profiles')
+   .action(async () => {
+      try {
+         const profiles = await listProfiles();
+
+         console.table(profiles);
       } catch (error) {
          console.error('Error creating IAM user:', error);
       }

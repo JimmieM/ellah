@@ -5,7 +5,9 @@ import { saveConfig } from '../user-config.js';
 
 export const importConfig = async (filePath: string): Promise<void> => {
    return new Promise(async (resolve, reject) => {
-      const password = await getPassword();
+      const password = await getPassword(
+         'Enter your password to decrypt and import your configuration file:',
+      );
 
       const file = await readFile(filePath);
       try {
