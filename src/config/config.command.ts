@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { exportConfig } from './export/export.config.js';
 import { importConfig } from './import/import.config.js';
-import { dbProviderTable } from './tables/db-provider.table.js';
 import { editorConfigTable } from './tables/editor-config.table.js';
 import { storageProviderTable } from './tables/storage-provider.table.js';
 import { loadConfig, saveConfig } from './user-config.js';

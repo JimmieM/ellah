@@ -117,9 +117,11 @@ export const commandWithErrorHandlingAndMiddleware = (
             throwIfRequiredConfigIsMissing(entity, requiredConfig, loadConfig);
 
             updateSpinnerText('Processing ...');
+
             console.log();
 
             await cb(...args);
+
             console.log();
 
             await cmdWithActions.onSuccess?.();
@@ -171,6 +173,7 @@ export const createBaseEntityCommands = (
             size: obj.Size,
             storageClass: obj.StorageClass,
          }));
+         console.log();
 
          console.table(table);
       });
