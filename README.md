@@ -52,9 +52,9 @@ ellah config ls
 
 Set your file provider. At the moment only Amazon S3 is supported.
 
-\`\`bash
+```bash
 ellah config set provider s3
-\`\`
+```
 
 Configure your S3 credentials
 
@@ -88,10 +88,6 @@ Configure Ellah to use your profile credentials
 ellah aws iam profile use <profileName>
 ```
 
-```bash
-ellah aws iam profile use <profileName>
-```
-
 View your current config, all keys should be defined.
 
 ```bash
@@ -112,7 +108,7 @@ Set a region for Ellah to always use
 ellah aws set region [myRegion]
 ```
 
-Set a bucket you know of
+Set a bucket name
 
 ```bash
 ellah aws set bucket [myBucket
