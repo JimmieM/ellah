@@ -20,49 +20,7 @@ As developers, we often find ourselves repeating the same setup processes on mul
 npm install -g ellah
 ```
 
-## Setup
-
-View your current config, all keys should be empty.
-
-```console
-ellah config ls
-```
-
-Set your file provider. At the moment only Amazon S3 is supported.
-
-[Setup AWS access keys](https://docs.aws.amazon.com/powershell/latest/userguide/pstools-appendix-sign-up.html)
-
-\`\`bash
-ellah config set provider s3
-\`\`
-
-Configure your S3 credentials
-
-```bash
-ellah config aws credentials set accessKeyId [myAccessKeyId]
-```
-
-```bash
-ellah config aws credentials set secretAccessKey [mySecretAccessKey]
-```
-
-Configure your S3 bucket
-
-```bash
-ellah config aws bucket set bucketName [myBucket]
-```
-
-```bash
-ellah config aws bucket set region [myRegion]
-```
-
-View your current config, all keys should be defined.
-
-```bash
-ellah config ls
-```
-
-### Setup using export and import.
+### Setup using export and import (recommended to use this step if you're configuring for another computer)
 
 After running export you'll be prompted to enter a password to encrypt the contents of your configuration file.
 
@@ -82,6 +40,109 @@ View your imported config
 ellah config ls
 ```
 
+## Setup AWS IAM
+
+View your current config, all keys should be empty.
+
+```console
+ellah config ls
+```
+
+### Manually set your accessKeyId and secretAccessKey
+
+Set your file provider. At the moment only Amazon S3 is supported.
+
+\`\`bash
+ellah config set provider s3
+\`\`
+
+Configure your S3 credentials
+
+[Setup AWS access keys](https://docs.aws.amazon.com/powershell/latest/userguide/pstools-appendix-sign-up.html)
+
+```bash
+ellah aws set accessKeyId [myAccessKeyId]
+```
+
+```bash
+ellah aws set secretAccessKey [mySecretAccessKey]
+```
+
+### Set your accessKeyId and secretAccessKey by using your local AWS IAM profile credentials
+
+View your profiles in ~/.aws
+
+```bash
+ellah aws iam profile ls
+```
+
+View credentials of selected profile
+
+```bash
+ellah aws iam profile get <profileName>
+```
+
+Configure Ellah to use your profile credentials
+
+```bash
+ellah aws iam profile use <profileName>
+```
+
+```bash
+ellah aws iam profile use <profileName>
+```
+
+View your current config, all keys should be defined.
+
+```bash
+ellah config ls
+```
+
+### Configure your S3 bucket
+
+```bash
+ellah config set provider s3
+```
+
+Once logged in with IAM you can list your buckets
+
+Set a region for Ellah to always use
+
+```bash
+ellah aws set region [myRegion]
+```
+
+Set a bucket you know of
+
+```bash
+ellah aws set bucket [myBucket
+```
+
+Or you can list buckets in a specific region by options
+
+```bash
+ellah aws bucket ls --region eu-north-1
+```
+
+Create a new bucket
+Use the --use argument to configure Ellah to use your new bucket and region, if provided.
+
+```bash
+ellah aws bucket create [bucketName] --use --region [region]
+```
+
+Configure Ellah to use a bucket name from your AWS account.
+
+```bash
+ellah aws set bucketName [myBucket]
+```
+
+View your current config, all keys should be defined.
+
+```bash
+ellah config ls
+```
+
 ## How to Use
 
 Here's the basic command structure of ellah:
@@ -89,6 +150,59 @@ Here's the basic command structure of ellah:
 ```bash
 ellah [entity] [action] [file] [args]
 ```
+
+### Alias
+
+With alias you can add bash scripts to be automatically synced between your devices .bash_profile. Get easy access to your personal aliases, functions and workflows.
+
+example
+
+```bash
+nano git_alias.sh
+```
+
+```bash
+# git_alias.sh
+#!/bin/bash
+
+alias gp="git push"
+alias gpf="git push --force"
+alias gadd="git add ."
+gcom() {
+  git commit -m "$1"
+}
+grebase() {
+  git rebase -i HEAD~$1
+}
+```
+
+```bash
+ellah alias add git_alias.sh
+```
+
+Includes git_alias.sh
+
+```bash
+ellah alias ls
+```
+
+Your .bash_profile now includes:
+
+```bash
+--- ELLAH START ---
+source ./path/to/user/.ellah-cli/alias/git_alias.sh
+--- ELLAH END ---
+```
+
+Your S3 bucket includes a folder with your alias file as alias/git_alias.sh.
+
+Remove an alias
+
+```bash
+ellah alias rm git_alias.sh
+```
+
+### General examples
 
 Here are some examples:
 
@@ -101,7 +215,7 @@ Here are some examples:
 -  To add an image:
 
    ```bash
-   ellah img add example.png --someArg
+   ellah img add example.png
    ```
 
 -  To list all scripts:
@@ -120,9 +234,6 @@ Here are some examples:
 
    ```bash
    ellah script mv script.sh destinationPath/script.sh
-
-   // changed your mind?
-   ellah script mv destinationPath/script.sh script.sh
    ```
 
 -  To remove a script:
@@ -181,7 +292,20 @@ Actions include but are not limited to:
 
 ## Commands
 
-(To be filled with a detailed list of commands, their descriptions, and examples of their usage.)
+### Config
+
+View your config
+
+```bash
+ellah config ls
+```
+
+View set a config key
+Existing keys are: provider="s3"
+
+```bash
+ellah config set [key] [value]
+```
 
 ## Contribution
 

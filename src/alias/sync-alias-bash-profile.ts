@@ -38,8 +38,8 @@ export const syncBashProfileWithAliasDir = () => {
       }
 
       const startMarker =
-         ": <<'EOF'\n--- ELLAH START (do not add lines between start and end as these will be overriden. Instead use the CLI. ellah alias --help) ---";
-      const endMarker = '--- ELLAH END ---\nEOF';
+         '# --- ELLAH START (do not add lines between start and end as these will be overriden. Instead use the CLI. ellah alias --help) ---';
+      const endMarker = '# --- ELLAH END ---';
 
       let startIndex = data.indexOf(startMarker);
       let endIndex = data.indexOf(endMarker);
