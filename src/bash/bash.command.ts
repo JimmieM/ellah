@@ -4,10 +4,13 @@ import { reloadBashProfile } from './bash.util.js';
 
 export const bashCommand = new Command('bash');
 
-bashCommand.command('reload').action(async () => {
+const reload = () => {
    updateSpinnerText('Processing ...');
 
    reloadBashProfile();
 
    spinnerSuccess();
-});
+};
+
+bashCommand.command('reload').action(() => reload());
+bashCommand.command('r').action(() => reload());

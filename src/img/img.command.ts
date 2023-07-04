@@ -13,6 +13,7 @@ const createImageCommand = createBaseEntityCommands(
       { command: 'mv' },
       { command: 'open' },
       { command: 'rm' },
+      { command: 'origin' },
    ],
    hasStorageConfig,
 );

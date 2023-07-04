@@ -1,4 +1,6 @@
 import { exec } from 'child_process';
+import os from 'os';
+import { getShellCommandForOS } from './bash.util.js';
 
 export const executeBash = (
    command: string,
@@ -9,15 +11,19 @@ export const executeBash = (
 }> => {
    return new Promise((resolve, reject) => {
       // Append script path and arguments to the command
+      const platform = os.platform();
+      const shell = getShellCommandForOS(platform);
 
       const childProcess = exec(
          command,
-         options || { shell: '/bin/bash' },
+         options || { shell: shell },
          (error: any, stdout: any, stderr: any) => {
             if (error) {
-               console.error('Error executing script:', error);
+               console.error('Error executing bash:', error);
                reject(error);
             } else {
+               console.warn(stderr);
+
                resolve({
                   output: stdout,
                   error: stderr,

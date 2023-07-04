@@ -1,9 +1,15 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
-import { bashProfilePath, reloadBashProfile } from '../bash/bash.util.js';
+import {
+   bashProfilePath,
+   getInlineBashSourceScriptString,
+   reloadBashProfile,
+} from '../bash/bash.util.js';
 
-const baseDir = path.join(os.homedir(), '.ellah-cli');
+const ellahCliDir = '.ellah-cli';
+
+const baseDir = path.join(os.homedir(), ellahCliDir);
 
 const ellahAliasFile = 'alias.sh';
 
@@ -28,7 +34,13 @@ export const syncBashProfileWithAliasDir = () => {
    }
 
    const linesToAdd = files
-      .map((file) => `source ${ellahAlias}/${file}`)
+      .map((file) => {
+         const inlineBashScript = getInlineBashSourceScriptString(
+            `${ellahCliDir}/alias/${file}`,
+         );
+
+         return inlineBashScript;
+      })
       .join('\n');
 
    fs.readFile(bashProfilePath, 'utf8', (err, data) => {
@@ -37,12 +49,14 @@ export const syncBashProfileWithAliasDir = () => {
          return;
       }
 
-      const startMarker =
-         '# --- ELLAH START (do not add lines between start and end as these will be overriden. Instead use the CLI. ellah alias --help) ---';
+      const startMarker = '# --- ELLAH START ---';
       const endMarker = '# --- ELLAH END ---';
 
       let startIndex = data.indexOf(startMarker);
       let endIndex = data.indexOf(endMarker);
+
+      console.warn({ startIndex });
+      console.warn({ endIndex });
 
       // If markers do not exist, add them at the end of the file
       if (startIndex === -1 || endIndex === -1) {

@@ -2,8 +2,11 @@ import { Command } from 'commander';
 import fs from 'fs';
 import mime from 'mime-types';
 import open from 'open';
+import os from 'os';
 import path from 'path';
+import { getCatCommandForOS } from '../bash/bash.util.js';
 import { executeBash } from '../bash/execute-bash.js';
+import { copyToClipboard } from '../clipboard/copy-to-clipboard.js';
 import { loadConfig } from '../config/user-config.js';
 import { UserConfig } from '../config/user-config.model.js';
 import { fileEditor } from '../editor/editor.js';
@@ -11,8 +14,8 @@ import filebucket from '../file-bucket/index.js';
 import { executeScript } from '../script/execute-script.js';
 import { spinnerSuccess, stopSpinner, updateSpinnerText } from '../spinner.js';
 import { syncFile } from '../synced/sync-file.js';
-import { tempDir } from '../temp/temp-dir.js';
-import { writeFile } from '../util/file.util.js';
+import { writeTempFile } from '../temp/write-temp-file.js';
+import { readFile, writeFile } from '../util/file.util.js';
 
 type EntityCommandIds = keyof typeof EntityCommands;
 
@@ -20,6 +23,10 @@ interface EntityCommand {
    [key: string]: {
       identifiers: string[];
       args?: string;
+      options?: {
+         flags: string;
+         description: string;
+      }[];
    };
 }
 
@@ -47,6 +54,12 @@ export const EntityCommands: EntityCommand = {
    open: {
       identifiers: ['open', 'op'],
       args: '<file>',
+      options: [
+         {
+            flags: '--folder -f',
+            description: 'Open folder of the file',
+         },
+      ],
    },
    edit: {
       identifiers: ['edit', 'e'],
@@ -64,12 +77,25 @@ export const EntityCommands: EntityCommand = {
       identifiers: ['cp', 'copy'],
       args: '<file> <destination>',
    },
+   clip: {
+      identifiers: ['clip'],
+      args: '<file>',
+   },
 };
 
 export interface CommandWithActions {
    command: EntityCommandIds;
    onSuccess?: () => Promise<void>;
    onFail?: (error: any) => Promise<void>;
+   pipeBeforeUpload?: (
+      fileContent: Buffer,
+      filename: string,
+      options: Record<string, string>,
+   ) => {
+      fileContent: Buffer;
+      filename: string;
+      options: Record<string, string>;
+   };
 }
 
 const commandsIncludes = (
@@ -105,8 +131,15 @@ export const commandWithErrorHandlingAndMiddleware = (
       const commandArgs = entityCommands[cmdWithActions.command].args;
       const commandIdentifiers =
          entityCommands[cmdWithActions.command].identifiers;
+      const commandOptions = entityCommands[cmdWithActions.command].options;
 
       const subCommand = cmd.command(`${commandIdentifiers[0]} ${commandArgs}`);
+
+      if (commandOptions) {
+         commandOptions.forEach((option) =>
+            subCommand.option(option.flags, option.description),
+         );
+      }
 
       commandIdentifiers.slice(1).forEach((alias) => {
          subCommand.alias(alias + ' ' + commandArgs);
@@ -163,6 +196,14 @@ export const createBaseEntityCommands = (
    const hasOrigin = commandsIncludes('origin', commandsConfig);
    const hasExec = commandsIncludes('exec', commandsConfig);
    const hasCat = commandsIncludes('cat', commandsConfig);
+   const hasClip = commandsIncludes('clip', commandsConfig);
+
+   if (!!hasClip)
+      bindCommand(hasClip, async (filePath: string) => {
+         const tempFile = await writeTempFile(entity, filePath, filebucket);
+         const content = await readFile(tempFile);
+         copyToClipboard(content);
+      });
 
    if (!!hasLs)
       bindCommand(hasLs, async () => {
@@ -222,11 +263,7 @@ export const createBaseEntityCommands = (
 
    if (!!hasOpen)
       bindCommand(hasOpen, async (filePath: string) => {
-         const tempFile = path.join(tempDir, filePath);
-
-         const file = await filebucket.Get(path.join(entity, filePath));
-
-         writeFile(tempFile, file.body);
+         const tempFile = await writeTempFile(entity, filePath, filebucket);
 
          await open(tempFile);
       });
@@ -269,7 +306,9 @@ export const createBaseEntityCommands = (
 
          const scriptPath = syncFile(entity, filePath, response.body);
 
-         const resp = await executeBash(`cat ${scriptPath}`);
+         const resp = await executeBash(
+            `${getCatCommandForOS(os.platform())} "${scriptPath}"`,
+         );
 
          console.log(resp.output);
 
@@ -279,22 +318,43 @@ export const createBaseEntityCommands = (
       });
 
    if (!!hasAdd)
-      bindCommand(hasAdd, async (file: string, name: string) => {
-         const fileBuffer = fs.readFileSync(file);
+      bindCommand(
+         hasAdd,
+         async (
+            file: string,
+            name: string,
+            options: Record<string, string>,
+         ) => {
+            const fn = (
+               fileContent: Buffer,
+               filename: string,
+               options: Record<string, string>,
+            ) => ({ fileContent, filename, options });
 
-         const contentType = mime.contentType(file) as any;
+            const pipeBeforeUpload = hasAdd.pipeBeforeUpload || fn;
 
-         const fileName = path.basename(file);
+            const fileBuffer = fs.readFileSync(file);
 
-         const response = await filebucket.Upload({
-            key: `${entity}/${fileName}`,
-            buffer: fileBuffer,
-            contentType: contentType,
-            filename: name || file,
-         });
+            const contentType = mime.contentType(file) as any;
 
-         console.table(response);
-      });
+            const fileName = path.basename(file);
+
+            const { fileContent } = pipeBeforeUpload(
+               fileBuffer,
+               fileName,
+               options,
+            );
+
+            const response = await filebucket.Upload({
+               key: `${entity}/${fileName}`,
+               buffer: fileContent,
+               contentType: contentType,
+               filename: name || file,
+            });
+
+            console.table(response);
+         },
+      );
 
    return {
       createSubCommand: commandWithErrorHandlingAndMiddleware(

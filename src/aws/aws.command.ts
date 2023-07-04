@@ -11,6 +11,8 @@ import {
    parseLocalAwsProfiles,
 } from './iam/get-local-credential-config.js';
 import { listProfiles } from './iam/list-iam.js';
+import { getTildeCommandForOS } from '../bash/bash.util.js';
+import os from 'os';
 
 export const awsCommand = new Command('aws');
 
@@ -155,7 +157,11 @@ awsCommand
 
 localAwsCredentials
    .command('ls')
-   .description('list stored config in ~/.aws/credentials')
+   .description(
+      `list stored config in ${getTildeCommandForOS(
+         os.platform(),
+      )}/.aws/credentials`,
+   )
    .action(() => {
       const profiles = parseLocalAwsProfiles();
       console.table(profiles);
@@ -194,7 +200,9 @@ localAwsCredentials
          console.log(`You're now using ${profileName} keys with Ellah`);
       } catch (error) {
          console.warn(
-            'Failed to use configuration from ~/.aws/credentials:',
+            `Failed to use configuration from ${getTildeCommandForOS(
+               os.platform(),
+            )}/.aws/credentials:`,
             profileName,
          );
       }

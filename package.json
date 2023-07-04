@@ -23,6 +23,7 @@
    "dependencies": {
       "aws-sdk": "^2.1402.0",
       "chalk": "^5.2.0",
+      "clipboardy": "^3.0.0",
       "commander": "^11.0.0",
       "inquirer": "^9.2.7",
       "mime-types": "^2.1.35",
