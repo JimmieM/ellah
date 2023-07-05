@@ -1,16 +1,13 @@
 import { exec } from 'child_process';
 import os from 'os';
+import { getOSUsername } from '../os/os.util.js';
 import { buildPath } from '../util/path.util.js';
 
 const bashProfile = '.bash_profile';
 
 export const bashProfilePath = buildPath(os.homedir(), bashProfile);
 
-const getOSUsername = () => {
-   return os.userInfo().username;
-};
-
-function getEscapedUsername() {
+const getEscapedUsername = () => {
    const username = getOSUsername();
 
    if (username.includes(' ')) {
@@ -19,9 +16,9 @@ function getEscapedUsername() {
    } else {
       return username;
    }
-}
+};
 
-function getHomeDirWithEscapedUsername(path: string) {
+const getHomeDirWithEscapedUsername = (path: string) => {
    const username = getOSUsername();
 
    if (username.includes(' ')) {
@@ -30,9 +27,9 @@ function getHomeDirWithEscapedUsername(path: string) {
    } else {
       return path;
    }
-}
+};
 
-export const getInlineBashSourceScriptString = (pathToBash: string): string => {
+const getInlineBashSourceScriptString = (pathToBash: string): string => {
    const dir = getHomeDirWithEscapedUsername(`${os.homedir()}/${pathToBash}`);
    const replacedCDir = dir.replace('C:\\', '');
    const replacedSlashes = replacedCDir.replace('\\', '/');
@@ -40,8 +37,18 @@ export const getInlineBashSourceScriptString = (pathToBash: string): string => {
    return `bash -c "source ${'/mnt/c/' + replacedSlashes}"`;
 };
 
-export const reloadBashProfile = () => {
-   exec(getInlineBashSourceScriptString(bashProfile), (error) => {
+export const getBashSourceScriptForOS = (
+   platform: string,
+   pathToBash: string,
+) => {
+   if (platform === 'win32') return getInlineBashSourceScriptString(pathToBash);
+
+   const dir = getHomeDirWithEscapedUsername(`${os.homedir()}/${pathToBash}`);
+   return `source ${dir};`;
+};
+
+export const reloadBashProfile = (platform: string) => {
+   exec(getBashSourceScriptForOS(platform, bashProfile), (error) => {
       if (error) {
          console.error('Error reloading bash profile:', error);
       } else {
@@ -55,19 +62,9 @@ export const getTildeCommandForOS = (os: string) => {
    return '~';
 };
 
-export const getSourceCommandForOS = (os: string) => {
-   if (os === 'win32') return 'call';
-   return 'source';
-};
-
 export const getCatCommandForOS = (os: string) => {
    if (os === 'win32') return 'type';
    return 'cat';
-};
-
-export const getOpenFolderCommandForOS = (os: string) => {
-   if (os === 'win32') return 'start';
-   return 'open';
 };
 
 export const getShellCommandForOS = (os: string) => {

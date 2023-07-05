@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import fs from 'fs';
 import mime from 'mime-types';
 import open from 'open';
-import os from 'os';
 import path from 'path';
 import { getCatCommandForOS } from '../bash/bash.util.js';
 import { executeBash } from '../bash/execute-bash.js';
@@ -11,6 +10,7 @@ import { loadConfig } from '../config/user-config.js';
 import { UserConfig } from '../config/user-config.model.js';
 import { fileEditor } from '../editor/editor.js';
 import filebucket from '../file-bucket/index.js';
+import { getCurrentOS } from '../os/os.util.js';
 import { executeScript } from '../script/execute-script.js';
 import { spinnerSuccess, stopSpinner, updateSpinnerText } from '../spinner.js';
 import { syncFile } from '../synced/sync-file.js';
@@ -307,7 +307,7 @@ export const createBaseEntityCommands = (
          const scriptPath = syncFile(entity, filePath, response.body);
 
          const resp = await executeBash(
-            `${getCatCommandForOS(os.platform())} "${scriptPath}"`,
+            `${getCatCommandForOS(getCurrentOS())} "${scriptPath}"`,
          );
 
          console.log(resp.output);
@@ -339,14 +339,14 @@ export const createBaseEntityCommands = (
 
             const fileName = path.basename(file);
 
-            const { fileContent } = pipeBeforeUpload(
+            const { fileContent, filename } = pipeBeforeUpload(
                fileBuffer,
                fileName,
                options,
             );
 
             const response = await filebucket.Upload({
-               key: `${entity}/${fileName}`,
+               key: `${entity}/${filename}`,
                buffer: fileContent,
                contentType: contentType,
                filename: name || file,

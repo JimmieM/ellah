@@ -13,6 +13,7 @@ import {
 import { listProfiles } from './iam/list-iam.js';
 import { getTildeCommandForOS } from '../bash/bash.util.js';
 import os from 'os';
+import { getCurrentOS } from '../os/os.util.js';
 
 export const awsCommand = new Command('aws');
 
@@ -159,7 +160,7 @@ localAwsCredentials
    .command('ls')
    .description(
       `list stored config in ${getTildeCommandForOS(
-         os.platform(),
+         getCurrentOS(),
       )}/.aws/credentials`,
    )
    .action(() => {
@@ -201,7 +202,7 @@ localAwsCredentials
       } catch (error) {
          console.warn(
             `Failed to use configuration from ${getTildeCommandForOS(
-               os.platform(),
+               getCurrentOS(),
             )}/.aws/credentials:`,
             profileName,
          );

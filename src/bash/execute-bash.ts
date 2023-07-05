@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import os from 'os';
+import { getCurrentOS } from '../os/os.util.js';
 import { getShellCommandForOS } from './bash.util.js';
 
 export const executeBash = (
@@ -11,7 +11,7 @@ export const executeBash = (
 }> => {
    return new Promise((resolve, reject) => {
       // Append script path and arguments to the command
-      const platform = os.platform();
+      const platform = getCurrentOS();
       const shell = getShellCommandForOS(platform);
 
       const childProcess = exec(
