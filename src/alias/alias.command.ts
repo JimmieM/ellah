@@ -13,6 +13,16 @@ const syncAliasDirAndBashProfile = async () => {
 
 const aliasEntityCommands = {
    ...EntityCommands,
+   ls: {
+      ...EntityCommands.ls,
+      options: [
+         {
+            flags: '--os <value>',
+            description:
+               'View your aliases by OS. Default will show all aliases synced your bash_profile.sh',
+         },
+      ],
+   },
    add: {
       ...EntityCommands.add,
       options: [
@@ -35,11 +45,52 @@ const availableOsKeys: Record<string, string[]> = {
    linux: ['linux-gnu'],
 };
 
+const getAliasOS = (item: any): string => {
+   const count = (item.key.match(/\//g) || []).length;
+
+   const os =
+      count > 1
+         ? item.key.split('/')[1] // /alias is at 0.
+         : 'SHARED';
+
+   return os;
+};
+
+const getAvailableOsKeys = (): string[][] => {
+   const keys = Object.keys(availableOsKeys);
+
+   const flattenAvailableKeys = keys.map((key) => [
+      key,
+      ...availableOsKeys[key],
+   ]);
+
+   return flattenAvailableKeys;
+};
+
 const createAliasCommand = createBaseEntityCommands(
    'alias',
    aliasEntityCommands,
    [
-      { command: 'ls' },
+      {
+         command: 'ls',
+         pipeListTable: (items, options) => {
+            const tableWithOs = items.map((item) => {
+               const os = getAliasOS(item);
+
+               return {
+                  ...item,
+                  os,
+               };
+            }) as any[];
+
+            if (options.os)
+               return tableWithOs?.filter(
+                  (e) => e?.os?.toLowercase() === options.os.toLowerCase(),
+               );
+
+            return tableWithOs;
+         },
+      },
       {
          command: 'add',
          onSuccess: syncAliasDirAndBashProfile,
@@ -50,13 +101,7 @@ const createAliasCommand = createBaseEntityCommands(
          ) => {
             if (options.os) {
                const keys = Object.keys(availableOsKeys);
-               const matchedKey = keys.find((key) => key === options.os);
-               if (!matchedKey)
-                  throw new Error(
-                     `No OS key named ${
-                        options.os
-                     } found. Available keys are: ${keys.join(', ')}`,
-                  );
+               const matchedKey = keys.find((key) => key === options.os)!;
 
                const keyCommands = availableOsKeys[matchedKey];
 

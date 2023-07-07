@@ -23,6 +23,7 @@ interface EntityCommand {
    [key: string]: {
       identifiers: string[];
       args?: string;
+      helperText?: string;
       options?: {
          flags: string;
          description: string;
@@ -96,6 +97,21 @@ export interface CommandWithActions {
       filename: string;
       options: Record<string, string>;
    };
+   pipeListTable?: (
+      items: {
+         key: string;
+         lastModified: number;
+         size: number;
+         storageClass: any;
+      }[],
+      options: Record<string, string>,
+   ) => {
+      [key: string]: any;
+      key: string;
+      lastModified: number;
+      size: number;
+      storageClass: any;
+   }[];
 }
 
 const commandsIncludes = (
@@ -206,7 +222,7 @@ export const createBaseEntityCommands = (
       });
 
    if (!!hasLs)
-      bindCommand(hasLs, async () => {
+      bindCommand(hasLs, async (options: Record<string, string>) => {
          const objects = await filebucket.ListObjects(entity);
          const table = objects.body.map((obj: any) => ({
             key: obj.Key,
@@ -216,7 +232,9 @@ export const createBaseEntityCommands = (
          }));
          console.log();
 
-         console.table(table);
+         const pipedTable = hasLs.pipeListTable?.(table, options) || table;
+
+         console.table(pipedTable);
       });
 
    if (!!hasRm)
@@ -240,14 +258,12 @@ export const createBaseEntityCommands = (
 
    if (!!hasExec)
       bindCommand(hasExec, async (file: string, args: string) => {
-         const response = await filebucket.Get(`${entity}/${file}`);
-
-         if (!response.body) {
-            console.warn('Script not found ...');
-            return;
-         }
-
-         const scriptPath = syncFile(entity, file, response.body);
+         const scriptPath = await writeTempFile(
+            entity,
+            file,
+            filebucket,
+            process.cwd(),
+         );
 
          const execute = await executeScript(scriptPath, args);
 

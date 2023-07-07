@@ -7,9 +7,10 @@ export const writeTempFile = async (
    entity: string,
    filePath: string,
    filebucket: IFileBucket,
+   dirOrDefaultTemp?: string,
 ): Promise<string> => {
    try {
-      const tempFile = buildPath(tempDir, entity, filePath);
+      const tempFile = buildPath(dirOrDefaultTemp ?? tempDir, entity, filePath);
 
       const file = await filebucket.Get(`${entity}/${filePath}`);
 

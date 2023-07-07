@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { Dirent } from 'fs';
 import os from 'os';
 import path from 'path';
 import {
@@ -16,23 +16,28 @@ const ellahAliasFile = 'alias.sh';
 
 const ellahAlias = path.join(baseDir, '/alias');
 
-const drillFilesInDir = (dirPath: string): string[] => {
-   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+const escapeRegExp = (str: string) => {
+   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+};
 
-   const filePaths = entries.map((entry) => {
-      let fullPath = path.join(dirPath, entry.name);
+const replaceAll = (str: string, find: string, replace: string): string => {
+   return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+};
+
+const drillFilesInDir = (dirPath: string): string[] => {
+   const entries: Dirent[] = fs.readdirSync(dirPath, { withFileTypes: true });
+
+   const filePaths: string[] = entries.flatMap((entry: Dirent) => {
+      const fullPath: string = path.join(dirPath, entry.name);
 
       if (entry.isDirectory()) {
          return drillFilesInDir(fullPath);
       } else {
-         return [fullPath];
+         return fullPath;
       }
    });
 
-   // Flatten the array and filter out any nulls or non .map files
-   return filePaths
-      .reduce((a, f) => a.concat(f), [])
-      .filter((f) => f && f.endsWith('.map'));
+   return filePaths;
 };
 
 export const syncBashProfileWithAliasDir = () => {
@@ -53,9 +58,13 @@ export const syncBashProfileWithAliasDir = () => {
       return;
    }
 
+   const filesWithRelativePaths = files.map((file) => {
+      return replaceAll(replaceAll(file, ellahAlias, ''), '//', '/');
+   });
+
    const currentOs = getCurrentOS();
 
-   const linesToAdd = files
+   const linesToAdd = filesWithRelativePaths
       .map((file) => {
          const inlineBashScript = getBashSourceScriptForOS(
             currentOs,
@@ -79,7 +88,7 @@ export const syncBashProfileWithAliasDir = () => {
       let endIndex = data.indexOf(endMarker);
 
       // If markers do not exist, add them at the end of the file
-      if (startIndex === -1 || endIndex === -1) {
+      if (startIndex === -1 && endIndex === -1) {
          data = `${data}\n${startMarker}\n${endMarker}\n`;
          startIndex = data.indexOf(startMarker);
          endIndex = data.indexOf(endMarker);
