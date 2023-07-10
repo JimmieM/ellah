@@ -84,20 +84,13 @@ export const EntityCommands: EntityCommand = {
    },
 };
 
-export interface CommandWithActions {
-   command: EntityCommandIds;
-   onSuccess?: () => Promise<void>;
-   onFail?: (error: any) => Promise<void>;
-   pipeBeforeUpload?: (
-      fileContent: Buffer,
-      filename: string,
-      options: Record<string, string>,
-   ) => {
-      fileContent: Buffer;
-      filename: string;
-      options: Record<string, string>;
-   };
-   pipeListTable?: (
+interface ParamPipes {
+   PipeFilePathParam: (path: string) => string;
+}
+
+interface ListPipes {
+   pipeListItemDataAsync: <T>(options: Record<string, string>) => Promise<T[]>;
+   pipeListTable: (
       items: {
          key: string;
          lastModified: number;
@@ -112,6 +105,27 @@ export interface CommandWithActions {
       size: number;
       storageClass: any;
    }[];
+}
+
+interface AddPipes {
+   pipeBeforeUpload: (
+      fileContent: Buffer,
+      filename: string,
+      options: Record<string, string>,
+   ) => {
+      fileContent: Buffer;
+      filename: string;
+      options: Record<string, string>;
+   };
+}
+
+export interface CommandWithActions
+   extends Partial<AddPipes>,
+      Partial<ListPipes>,
+      Partial<ParamPipes> {
+   command: EntityCommandIds;
+   onSuccess?: () => Promise<void>;
+   onFail?: (error: any) => Promise<void>;
 }
 
 const commandsIncludes = (
@@ -223,13 +237,19 @@ export const createBaseEntityCommands = (
 
    if (!!hasLs)
       bindCommand(hasLs, async (options: Record<string, string>) => {
-         const objects = await filebucket.ListObjects(entity);
-         const table = objects.body.map((obj: any) => ({
-            key: obj.Key,
-            lastModified: obj.LastModified,
-            size: obj.Size,
-            storageClass: obj.StorageClass,
-         }));
+         const hasAsyncDataPipe = await hasLs.pipeListItemDataAsync?.(options);
+
+         const fileBucketData = async () => {
+            const objects = await filebucket.ListObjects(entity);
+            return objects.body.map((obj: any) => ({
+               key: obj.Key,
+               lastModified: obj.LastModified,
+               size: obj.Size,
+               storageClass: obj.StorageClass,
+            }));
+         };
+         const table = hasAsyncDataPipe || (await fileBucketData());
+
          console.log();
 
          const pipedTable = hasLs.pipeListTable?.(table, options) || table;
@@ -346,6 +366,8 @@ export const createBaseEntityCommands = (
                filename: string,
                options: Record<string, string>,
             ) => ({ fileContent, filename, options });
+
+            console.warn('running add');
 
             const pipeBeforeUpload = hasAdd.pipeBeforeUpload || fn;
 

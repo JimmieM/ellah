@@ -8,7 +8,7 @@ import { syncAliasDir } from './sync-alias-dir.js';
 
 const syncAliasDirAndBashProfile = async () => {
    await syncAliasDir();
-   await syncBashProfileWithAliasDir();
+   syncBashProfileWithAliasDir();
 };
 
 const aliasEntityCommands = {
@@ -41,8 +41,7 @@ const aliasEntityCommands = {
 
 const availableOsKeys: Record<string, string[]> = {
    win: ['win32', 'msys', 'cygwin'],
-   mac: ['darwin'],
-   linux: ['linux-gnu'],
+   unix: ['darwin', 'linux-gnu'],
 };
 
 const getAliasOS = (item: any): string => {
@@ -54,17 +53,6 @@ const getAliasOS = (item: any): string => {
          : 'SHARED';
 
    return os;
-};
-
-const getAvailableOsKeys = (): string[][] => {
-   const keys = Object.keys(availableOsKeys);
-
-   const flattenAvailableKeys = keys.map((key) => [
-      key,
-      ...availableOsKeys[key],
-   ]);
-
-   return flattenAvailableKeys;
 };
 
 const createAliasCommand = createBaseEntityCommands(

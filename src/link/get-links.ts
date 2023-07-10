@@ -1,7 +1,8 @@
 import filebucket from '../file-bucket/index.js';
+import { getLinkContent } from './get-link-content.js';
 
 export const getLinks = async () => {
    const links = await filebucket.ListObjects('link');
 
-   console.table(links);
+   return links.body.map((file: any) => getLinkContent(file.Key));
 };
