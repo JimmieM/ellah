@@ -1,9 +1,16 @@
 import filebucket from '../file-bucket/index.js';
+import { buildPath } from '../util/path.util.js';
 import { getLinkContent } from './get-link-content.js';
 import { Link } from './link.model.js';
+const entity = 'link';
 
-export const getLinksByTags = async (tags: string): Promise<Link> => {
-   const files = await filebucket.ListObjects('link');
+export const getLinksByTags = async (
+   tags: string,
+   path?: string,
+): Promise<Link> => {
+   const listPath = path ? buildPath(entity, path) : entity;
+
+   const files = await filebucket.ListObjects(listPath);
 
    const filteredFiles = files.body.filter(({ Key }: { Key: string }) => {
       const splittedFilename = Key.split('|');
@@ -11,8 +18,8 @@ export const getLinksByTags = async (tags: string): Promise<Link> => {
          const splittedTags = tagsSection.split(`tags=`);
          if (splittedTags.length === 0) return false;
 
-         const tags = splittedTags[0].split(',');
-         return tags.some((tag) => tags.includes(tag));
+         const fileTags = splittedTags[0].split(',');
+         return fileTags.some((tag) => tags.includes(tag));
       });
    });
 

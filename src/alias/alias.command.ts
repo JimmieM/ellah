@@ -55,7 +55,7 @@ const getAliasOS = (item: any): string => {
    return os;
 };
 
-const createAliasCommand = createBaseEntityCommands(
+const createAliasCommand = createBaseEntityCommands<any>(
    'alias',
    aliasEntityCommands,
    [

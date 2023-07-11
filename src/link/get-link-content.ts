@@ -4,10 +4,7 @@ export const linkFileToString = (file: any): string => {
    return file.toString('utf-8');
 };
 
-export const getLinkContent = (content: string): Link | undefined => {
-   console.warn({ content });
-
-   if (!content) return undefined;
+export const getLinkContent = (content: string): Link => {
    const splitted = content?.split('|');
    const name = splitted
       .find((section) => section.includes('name='))

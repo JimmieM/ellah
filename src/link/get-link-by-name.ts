@@ -25,9 +25,7 @@ async function findFiles(
    return matchingFiles;
 }
 
-export const getLinkByName = async (
-   name: string,
-): Promise<Link | undefined> => {
+export const getLinkByName = async (name: string): Promise<Link[]> => {
    const files = await findFiles('link', ({ Key }) => {
       const splittedFilename = Key.split('|');
       return splittedFilename.some((nameSection: string) =>
@@ -35,13 +33,5 @@ export const getLinkByName = async (
       );
    });
 
-   console.warn({ files });
-
-   const fileName = files[0];
-
-   if (!fileName) return undefined;
-
-   const link = getLinkContent(fileName.Key);
-
-   return link;
+   return files.map((file: any) => getLinkContent(file.Key));
 };
