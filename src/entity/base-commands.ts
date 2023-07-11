@@ -17,6 +17,44 @@ import { syncFile } from '../synced/sync-file.js';
 import { writeTempFile } from '../temp/write-temp-file.js';
 import { readFile, writeFile } from '../util/file.util.js';
 import { buildPath } from '../util/path.util.js';
+import { tempDir } from '../temp/temp-dir.js';
+
+const upload = async <T>(
+   cmd: CommandWithActions<T>,
+   entity: string,
+   file: {
+      file: any;
+      name: string;
+   },
+   options: Record<string, string>,
+) => {
+   const fn = (
+      fileContent: Buffer,
+      filename: string,
+      options: Record<string, string>,
+   ) => ({ fileContent, filename, options });
+
+   const pipeBeforeUpload = cmd.pipeBeforeUpload || fn;
+
+   const fileBuffer = fs.readFileSync(file.file);
+
+   const contentType = mime.contentType(file.file) as any;
+
+   const fileName = path.basename(file.file);
+
+   const { fileContent, filename } = pipeBeforeUpload(
+      fileBuffer,
+      fileName,
+      options,
+   );
+
+   return filebucket.Upload({
+      key: `${entity}/${filename}`,
+      buffer: fileContent,
+      contentType: contentType,
+      filename: file.name,
+   });
+};
 
 type EntityCommandIds = keyof typeof EntityCommands;
 
@@ -83,6 +121,10 @@ export const EntityCommands: EntityCommand = {
       identifiers: ['clip'],
       args: '<file>',
    },
+   new: {
+      identifiers: ['new', 'n'],
+      args: '<file>',
+   },
 };
 
 interface GeneralParamPipes {
@@ -97,6 +139,10 @@ interface ListPipes<T> {
       path: string,
       options: Record<string, string>,
    ) => Promise<T[]>;
+   pipeListTableAsync: (
+      items: T[],
+      options: Record<string, string>,
+   ) => Promise<Partial<T>[]>;
    pipeListTable: (items: T[], options: Record<string, string>) => Partial<T>[];
 }
 
@@ -232,6 +278,7 @@ export const createBaseEntityCommands = <T>(
    const hasExec = commandsIncludes('exec', commandsConfig);
    const hasCat = commandsIncludes('cat', commandsConfig);
    const hasClip = commandsIncludes('clip', commandsConfig);
+   const hasNew = commandsIncludes('new', commandsConfig);
 
    if (!!hasClip)
       bindCommand(hasClip, async (filePath: string) => {
@@ -264,7 +311,10 @@ export const createBaseEntityCommands = <T>(
 
             console.log();
 
-            const pipedTable = hasLs.pipeListTable?.(table, options) || table;
+            const pipedTable =
+               hasLs.pipeListTable?.(table, options) ||
+               (await hasLs.pipeListTableAsync?.(table, options)) ||
+               table;
 
             console.table(pipedTable);
          },
@@ -317,7 +367,31 @@ export const createBaseEntityCommands = <T>(
       bindCommand(hasEdit, async (scriptPath: string) => {
          const config = loadConfig();
 
-         await fileEditor(scriptPath, entity, config.editor.type);
+         const tempScriptPath = buildPath(tempDir, scriptPath);
+
+         const downloadRequest = await filebucket.Get(
+            `            ${entity}/${scriptPath}`,
+         );
+
+         const downloadToBuffer = Buffer.from(downloadRequest.body);
+
+         const temporaryFilePath = await fileEditor(
+            tempScriptPath,
+            downloadToBuffer,
+            config.editor.type,
+         );
+
+         const fileBuffer = fs.readFileSync(temporaryFilePath);
+         const fileName = path.basename(scriptPath);
+
+         const res = await upload(
+            hasEdit,
+            entity,
+            { file: fileBuffer, name: fileName },
+            {},
+         );
+
+         if (res?.key || res?.body) console.log('Script saved successfully.');
       });
 
    if (!!hasOpen)
@@ -392,34 +466,53 @@ export const createBaseEntityCommands = <T>(
             name: string,
             options: Record<string, string>,
          ) => {
-            const fn = (
-               fileContent: Buffer,
-               filename: string,
-               options: Record<string, string>,
-            ) => ({ fileContent, filename, options });
-
-            const pipeBeforeUpload = hasAdd.pipeBeforeUpload || fn;
-
-            const fileBuffer = fs.readFileSync(file);
-
-            const contentType = mime.contentType(file) as any;
-
-            const fileName = path.basename(file);
-
-            const { fileContent, filename } = pipeBeforeUpload(
-               fileBuffer,
-               fileName,
+            const res = await upload(
+               hasAdd,
+               entity,
+               {
+                  file,
+                  name,
+               },
                options,
             );
 
-            const response = await filebucket.Upload({
-               key: `${entity}/${filename}`,
-               buffer: fileContent,
-               contentType: contentType,
-               filename: name || file,
-            });
+            console.table(res);
+         },
+      );
 
-            console.table(response);
+   if (!!hasNew)
+      bindCommand(
+         hasNew,
+         async (name: string, options: Record<string, string>) => {
+            const scriptPath = buildPath(tempDir, name);
+            await writeFile(scriptPath, '');
+
+            const config = loadConfig();
+
+            const emptyContents = await readFile(scriptPath);
+
+            const emptyToBuffer = Buffer.from(emptyContents);
+
+            await fileEditor(scriptPath, emptyToBuffer, config.editor.type);
+
+            const editedContent = await readFile(scriptPath);
+
+            if (!editedContent) {
+               console.warn('File not found ...');
+               return;
+            }
+
+            const uploadRes = await upload(
+               hasNew,
+               entity,
+               {
+                  file: editedContent,
+                  name,
+               },
+               options,
+            );
+
+            console.table(uploadRes);
          },
       );
 

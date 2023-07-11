@@ -1,58 +1,43 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
-import mime from 'mime-types';
-import path from 'path';
+import { Readable } from 'stream';
 import { DEFAULT_EDITOR } from '../default/index.js';
-import filebucket from '../file-bucket/index.js';
-import { tempDir } from '../temp/temp-dir.js';
-import { buildPath } from '../util/path.util.js';
 
 export const fileEditor = async (
    scriptPath: string,
-   entityType: string,
+   buffer: Buffer,
    _editor?: string,
-) => {
-   const editor = _editor || DEFAULT_EDITOR;
+): Promise<string> => {
+   return new Promise(async (resolve, reject) => {
+      const editor = _editor || DEFAULT_EDITOR;
 
-   const temporaryFilePath = buildPath(tempDir, entityType, scriptPath);
+      const temporaryFilePath = scriptPath;
 
-   const downloadRequest = await filebucket.GetWithReadStream(
-      path.join(entityType, scriptPath),
-   );
+      const fileWriteStream = fs.createWriteStream(temporaryFilePath);
 
-   const fileWriteStream = fs.createWriteStream(temporaryFilePath);
+      const bufferStream = new Readable();
+      bufferStream.push(buffer);
+      bufferStream.push(null); // Signal that stream end is reached
 
-   downloadRequest.createReadStream().pipe(fileWriteStream);
+      bufferStream.pipe(fileWriteStream);
 
-   fileWriteStream.on('error', (err) => {
-      console.error('Error saving file:', err);
-   });
-
-   fileWriteStream.on('finish', async () => {
-      console.log('File saved successfully!');
-      const editProcess = spawnSync(editor, [temporaryFilePath], {
-         stdio: 'inherit',
+      fileWriteStream.on('error', (err) => {
+         console.error('Error saving file:', err);
       });
 
-      if (editProcess.status === 0) {
-         console.log('Script edited successfully!');
-
-         const fileBuffer = fs.readFileSync(temporaryFilePath);
-
-         const contentType = mime.contentType(scriptPath) as any;
-
-         const fileName = path.basename(scriptPath);
-
-         const res = await filebucket.Upload({
-            key: `${entityType}/${fileName}`,
-            buffer: fileBuffer,
-            contentType: contentType,
-            filename: scriptPath,
+      fileWriteStream.on('finish', async () => {
+         console.log('File saved successfully!');
+         const editProcess = spawnSync(editor, [temporaryFilePath], {
+            stdio: 'inherit',
          });
 
-         if (res.body) console.log('Script saved successfully.');
-      } else {
-         console.error('Error editing script!');
-      }
+         if (editProcess.status === 0) {
+            console.log('Script edited successfully!');
+            resolve(temporaryFilePath);
+         } else {
+            console.error('Error editing script!');
+            reject(editProcess.error);
+         }
+      });
    });
 };

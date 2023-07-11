@@ -1,5 +1,4 @@
 import filebucket from '../file-bucket/index.js';
-import { buildPath } from '../util/path.util.js';
 import { getLinkContent } from './get-link-content.js';
 import { Link } from './link.model.js';
 const entity = 'link';
@@ -8,8 +7,7 @@ export const getLinksByTags = async (
    tags: string,
    path?: string,
 ): Promise<Link> => {
-   const listPath = path ? buildPath(entity, path) : entity;
-
+   const listPath = path ? `${entity}/${path}` : entity;
    const files = await filebucket.ListObjects(listPath);
 
    const filteredFiles = files.body.filter(({ Key }: { Key: string }) => {

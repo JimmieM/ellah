@@ -1,9 +1,15 @@
 import inquirer from 'inquirer';
 
-export const selectListPrompt = <T>(
+export interface NavigationItem {
+   name: string;
+   value: string;
+   isDir?: boolean;
+}
+
+export const selectListPrompt = (
    message: string,
-   choices: { name: string; value: T }[],
-): Promise<T> => {
+   choices: NavigationItem[],
+): Promise<NavigationItem> => {
    return new Promise((resolve, reject) => {
       const questions = [
          {
@@ -17,7 +23,15 @@ export const selectListPrompt = <T>(
       inquirer
          .prompt(questions)
          .then((answers) => {
-            resolve(answers.option);
+            const option = answers.option;
+
+            const item = choices.find((choice) => choice.value === option);
+            resolve(
+               item || {
+                  value: option,
+                  name: '',
+               },
+            );
          })
          .catch(reject);
    });

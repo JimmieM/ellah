@@ -37,6 +37,16 @@ const aliasEntityCommands = {
       identifiers: ['s', 'sync'],
       args: '',
    },
+   new: {
+      ...EntityCommands.new,
+      options: [
+         {
+            flags: '--os <value>',
+            description:
+               'View your aliases by OS. Default will show all aliases synced your bash_profile.sh',
+         },
+      ],
+   },
 };
 
 const availableOsKeys: Record<string, string[]> = {
@@ -49,7 +59,7 @@ const getAliasOS = (item: any): string => {
 
    const os =
       count > 1
-         ? item.key.split('/')[1] // /alias is at 0.
+         ? item.key.split('/')[1] // ./alias is at 0.
          : 'SHARED';
 
    return os;
@@ -124,6 +134,7 @@ const createAliasCommand = createBaseEntityCommands<any>(
       { command: 'cp', onSuccess: syncAliasDirAndBashProfile },
       { command: 'origin' },
       { command: 'clip' },
+      { command: 'new' },
    ],
    hasStorageConfig,
 );

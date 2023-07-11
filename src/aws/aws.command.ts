@@ -1,6 +1,8 @@
 import { Command } from 'commander';
+import { getTildeCommandForOS } from '../bash/bash.util.js';
 import { loadConfig, saveConfig, setConfig } from '../config/user-config.js';
 import { UserConfig } from '../config/user-config.model.js';
+import { getCurrentOS } from '../os/os.util.js';
 import { createBucket } from './bucket/create-bucket.js';
 import { deleteBucket } from './bucket/delete-bucket.js';
 import { getBuckets } from './bucket/get-buckets.js';
@@ -11,9 +13,6 @@ import {
    parseLocalAwsProfiles,
 } from './iam/get-local-credential-config.js';
 import { listProfiles } from './iam/list-iam.js';
-import { getTildeCommandForOS } from '../bash/bash.util.js';
-import os from 'os';
-import { getCurrentOS } from '../os/os.util.js';
 
 export const awsCommand = new Command('aws');
 

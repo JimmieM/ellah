@@ -5,23 +5,37 @@ export const linkFileToString = (file: any): string => {
 };
 
 export const getLinkContent = (content: string): Link => {
-   const splitted = content?.split('|');
-   const name = splitted
+   const isDir = !content.includes('[') && !content.includes(']');
+
+   if (isDir)
+      return {
+         key: content,
+         link: '',
+         name: content,
+      };
+
+   const linkPath = content?.split('[')[0];
+
+   const splittedContent = content?.split('|');
+   const name = splittedContent
       .find((section) => section.includes('name='))
       ?.split('=')[1];
 
    const link =
-      splitted.find((section) => section.includes('link='))?.split('=')[1] ??
-      '';
+      splittedContent
+         .find((section) => section.includes('link='))
+         ?.split('=')[1] ?? '';
 
-   const tags = splitted
+   const decodedLink = decodeURIComponent(link);
+
+   const tags = splittedContent
       .find((section) => section.includes('tags='))
       ?.split('=')[1]
       ?.split(',');
 
    return {
-      key: content,
-      link,
+      key: linkPath + content,
+      link: decodedLink,
       name,
       tags,
    };
