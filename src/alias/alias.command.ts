@@ -65,6 +65,37 @@ const getAliasOS = (item: any): string => {
    return os;
 };
 
+const pipeBeforeUploadHelper = (
+   fileContent: Buffer,
+   filename: string,
+   options: Record<string, string>,
+) => {
+   if (options.os) {
+      const keys = Object.keys(availableOsKeys);
+      const matchedKey = keys.find((key) => key === options.os)!;
+
+      const keyCommands = availableOsKeys[matchedKey];
+
+      const updatedContent = `
+      # Check the operating system
+      if [[ ${keyCommands
+         .map((cmd, idx) => `"$OSTYPE" == "${cmd}"${idx === 0 ? '*' : ''}`)
+         .join(' || ')} ]]; then
+          ${fileContent}
+      fi`;
+
+      const extendedFilename = `${options.os}/${filename}`;
+
+      return {
+         fileContent: Buffer.from(updatedContent),
+         options,
+         filename: extendedFilename,
+      };
+   }
+
+   return { fileContent, options, filename };
+};
+
 const createAliasCommand = createBaseEntityCommands<any>(
    'alias',
    aliasEntityCommands,
@@ -97,33 +128,7 @@ const createAliasCommand = createBaseEntityCommands<any>(
             filename: string,
             options: Record<string, string>,
          ) => {
-            if (options.os) {
-               const keys = Object.keys(availableOsKeys);
-               const matchedKey = keys.find((key) => key === options.os)!;
-
-               const keyCommands = availableOsKeys[matchedKey];
-
-               const updatedContent = `
-               # Check the operating system
-               if [[ ${keyCommands
-                  .map(
-                     (cmd, idx) =>
-                        `"$OSTYPE" == "${cmd}"${idx === 0 ? '*' : ''}`,
-                  )
-                  .join(' || ')} ]]; then
-                   ${fileContent}
-               fi`;
-
-               const extendedFilename = `${options.os}/${filename}`;
-
-               return {
-                  fileContent: Buffer.from(updatedContent),
-                  options,
-                  filename: extendedFilename,
-               };
-            }
-
-            return { fileContent, options, filename };
+            return pipeBeforeUploadHelper(fileContent, filename, options);
          },
       },
       { command: 'edit', onSuccess: syncAliasDirAndBashProfile },
@@ -134,7 +139,17 @@ const createAliasCommand = createBaseEntityCommands<any>(
       { command: 'cp', onSuccess: syncAliasDirAndBashProfile },
       { command: 'origin' },
       { command: 'clip' },
-      { command: 'new' },
+      {
+         command: 'new',
+         onSuccess: syncAliasDirAndBashProfile,
+         pipeBeforeUpload: (
+            fileContent: Buffer,
+            filename: string,
+            options: Record<string, string>,
+         ) => {
+            return pipeBeforeUploadHelper(fileContent, filename, options);
+         },
+      },
    ],
    hasStorageConfig,
 );

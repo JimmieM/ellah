@@ -1,5 +1,5 @@
 import filebucket from '../file-bucket/index.js';
-import { removeFilesInDir, writeFile } from '../util/file.util.js';
+import { removeFilesInDirRecursive, writeFile } from '../util/file.util.js';
 import { buildPath } from '../util/path.util.js';
 import { ellahAliasDir } from './alias.config.js';
 
@@ -10,7 +10,7 @@ export const syncAliasDir = async (): Promise<void> => {
       return;
    }
 
-   removeFilesInDir(ellahAliasDir);
+   removeFilesInDirRecursive(ellahAliasDir);
 
    const createFilesPromises = res.body.map(async (obj: any) => {
       const file = await filebucket.Get(obj.Key);
