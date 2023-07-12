@@ -26,7 +26,7 @@ export const mkDir = async (dirPath: string) => {
    }
 };
 
-export const removeFilesInDir = async (dir: string) => {
+export const removeFilesInDirRecursive = async (dir: string) => {
    try {
       const dirents: Dirent[] = await fs.readdir(dir, { withFileTypes: true });
       for (const dirent of dirents) {
@@ -35,7 +35,7 @@ export const removeFilesInDir = async (dir: string) => {
             await fs.unlink(filePath);
             console.log('File deleted:', filePath);
          } else if (dirent.isDirectory()) {
-            console.log('Skipping directory:', filePath);
+            removeFilesInDirRecursive(filePath);
          }
       }
    } catch (err) {

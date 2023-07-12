@@ -20,12 +20,12 @@ import { buildPath } from '../util/path.util.js';
 import { tempDir } from '../temp/temp-dir.js';
 import { confirmPrompt } from '../input/confirm.prompt.js';
 
-const upload = async <T>(
+const readAndUpload = async <T>(
    cmd: CommandWithActions<T>,
    entity: string,
    file: {
-      file: any;
-      name: string;
+      filePath: string;
+      name?: string;
    },
    options: Record<string, string>,
 ) => {
@@ -37,11 +37,11 @@ const upload = async <T>(
 
    const pipeBeforeUpload = cmd.pipeBeforeUpload || fn;
 
-   const fileBuffer = fs.readFileSync(file.file);
+   const fileBuffer = fs.readFileSync(file.filePath);
 
-   const contentType = mime.contentType(file.file) as any;
+   const contentType = mime.contentType(file.filePath) as any;
 
-   const fileName = path.basename(file.file);
+   const fileName = file.name || path.basename(file.filePath);
 
    const { fileContent, filename } = pipeBeforeUpload(
       fileBuffer,
@@ -53,7 +53,7 @@ const upload = async <T>(
       key: `${entity}/${filename}`,
       buffer: fileContent,
       contentType: contentType,
-      filename: file.name,
+      filename: filename,
    });
 };
 
@@ -396,13 +396,10 @@ export const createBaseEntityCommands = <T>(
             config.editor.type,
          );
 
-         const fileBuffer = fs.readFileSync(temporaryFilePath);
-         const fileName = path.basename(scriptPath);
-
-         const res = await upload(
+         const res = await readAndUpload(
             hasEdit,
             entity,
-            { file: fileBuffer, name: fileName },
+            { filePath: temporaryFilePath },
             {},
          );
 
@@ -481,11 +478,11 @@ export const createBaseEntityCommands = <T>(
             name: string,
             options: Record<string, string>,
          ) => {
-            const res = await upload(
+            const res = await readAndUpload(
                hasAdd,
                entity,
                {
-                  file,
+                  filePath: file,
                   name,
                },
                options,
@@ -508,24 +505,17 @@ export const createBaseEntityCommands = <T>(
 
             const emptyToBuffer = Buffer.from(emptyContents);
 
-            await fileEditor(scriptPath, emptyToBuffer, config.editor.type);
+            const tempSavePath = await fileEditor(
+               scriptPath,
+               emptyToBuffer,
+               config.editor.type,
+            );
 
-            console.warn('dne edititng');
-
-            const editedContent = await readFile(scriptPath);
-
-            console.warn('dtiedContent', editedContent);
-
-            if (!editedContent) {
-               console.warn('File not found ...');
-               return;
-            }
-
-            const uploadRes = await upload(
+            const uploadRes = await readAndUpload(
                hasNew,
                entity,
                {
-                  file: editedContent,
+                  filePath: tempSavePath,
                   name,
                },
                options,
