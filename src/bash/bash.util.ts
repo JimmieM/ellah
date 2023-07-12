@@ -37,6 +37,18 @@ const getInlineBashSourceScriptString = (pathToBash: string): string => {
    return `bash -c "source ${'/mnt/c/' + replacedSlashes}"`;
 };
 
+export const checkIfCommandExistLocally = (
+   command: string,
+): Promise<boolean> => {
+   return new Promise((resolve) => {
+      const platform = process.platform;
+      const cmd = platform === 'win32' ? 'where' : 'which';
+      exec(`${cmd} ${command}`, (error) => {
+         resolve(!error);
+      });
+   });
+};
+
 export const getBashSourceScriptForOS = (
    platform: string,
    pathToBash: string,

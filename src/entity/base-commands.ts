@@ -18,6 +18,7 @@ import { writeTempFile } from '../temp/write-temp-file.js';
 import { readFile, writeFile } from '../util/file.util.js';
 import { buildPath } from '../util/path.util.js';
 import { tempDir } from '../temp/temp-dir.js';
+import { confirmPrompt } from '../input/confirm.prompt.js';
 
 const upload = async <T>(
    cmd: CommandWithActions<T>,
@@ -330,8 +331,22 @@ export const createBaseEntityCommands = <T>(
                options,
             );
 
-            const response = await filebucket.Delete(`${entity}/${filePath}`);
-            console.table(response);
+            const entityWithFilePath = `${entity}/${filePath}`;
+
+            const awaitYesNo = await confirmPrompt(
+               `Are you sure you want to remove ${entityWithFilePath}?`,
+            );
+
+            if (awaitYesNo) {
+               const response = await filebucket.Delete(
+                  `${entityWithFilePath}`,
+               );
+               console.warn(`Deleted ${entityWithFilePath}`);
+               console.table(response);
+               return;
+            }
+
+            console.warn('Aborted deletion.');
          },
       );
 
@@ -495,7 +510,11 @@ export const createBaseEntityCommands = <T>(
 
             await fileEditor(scriptPath, emptyToBuffer, config.editor.type);
 
+            console.warn('dne edititng');
+
             const editedContent = await readFile(scriptPath);
+
+            console.warn('dtiedContent', editedContent);
 
             if (!editedContent) {
                console.warn('File not found ...');

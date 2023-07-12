@@ -139,6 +139,7 @@ const linksToFileNavigationItems = (links: Link[], path: string) => {
 };
 
 const getPromptSelectedLinkByCb = async (
+   actionMessage: string,
    path: string,
    cb: (url: string) => Promise<Link[]>,
 ) => {
@@ -150,7 +151,7 @@ const getPromptSelectedLinkByCb = async (
          stopSpinner();
 
          const selectedPath = await selectListPrompt(
-            'Select link to remove',
+            actionMessage,
             foundLinks.map((link) => ({
                name: `${link.link} | ${link.tags?.join(', ')}`,
                value: link.key,
@@ -172,15 +173,24 @@ const getPromptSelectedLinkByCb = async (
 };
 
 const pipeFilePathAsyncHelper = async (
+   actionMessage: string,
    path: string,
    options?: Record<string, string>,
 ) => {
    if (options?.name) {
-      return await getPromptSelectedLinkByCb(path, getLinkByName);
+      return await getPromptSelectedLinkByCb(
+         actionMessage,
+         path,
+         getLinkByName,
+      );
    }
 
    if (options?.url) {
-      return await getPromptSelectedLinkByCb(path, getLinkByUrlIncludes);
+      return await getPromptSelectedLinkByCb(
+         actionMessage,
+         path,
+         getLinkByUrlIncludes,
+      );
    }
    return null!;
 };
@@ -225,25 +235,41 @@ const createLinkCommand = createBaseEntityCommands<Link>(
       {
          command: 'mv',
          pipeFilePathParamAsync: async (path, options) => {
-            return pipeFilePathAsyncHelper(path, options);
+            return pipeFilePathAsyncHelper(
+               'Select a file to move',
+               path,
+               options,
+            );
          },
       },
       {
          command: 'rm',
          pipeFilePathParamAsync: async (path, options) => {
-            return pipeFilePathAsyncHelper(path, options);
+            return pipeFilePathAsyncHelper(
+               'Select a file to remove',
+               path,
+               options,
+            );
          },
       },
       {
          command: 'origin',
          pipeFilePathParamAsync: async (path, options) => {
-            return pipeFilePathAsyncHelper(path, options);
+            return pipeFilePathAsyncHelper(
+               'Select a file origin',
+               path,
+               options,
+            );
          },
       },
       {
          command: 'clip',
          pipeFilePathParamAsync: async (path, options) => {
-            return pipeFilePathAsyncHelper(path, options);
+            return pipeFilePathAsyncHelper(
+               'Select a file to clip',
+               path,
+               options,
+            );
          },
       },
    ],
