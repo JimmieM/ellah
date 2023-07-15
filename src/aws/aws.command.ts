@@ -245,7 +245,9 @@ bucketCommand
 
             saveConfig(manipulatedConfig);
 
-            console.log(`Ellah is now using ${bucket}`);
+            console.log(
+               `Ellah is now using ${bucket} with region ${options.region}`,
+            );
          }
       } catch (error) {
          console.warn('Failed to add bucket: ', error);
