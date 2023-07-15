@@ -14,7 +14,7 @@
 
 # Introduction
 
-Ellah is a powerful command line interface (CLI) tool designed to synchronize scripts, images, links, and more across multiple devices. It allows users to add, remove, execute, and manage files via a simple and intuitive set of commands. With Ellah, you can make your development setup consistent across all your machines, simplifying your workflow and boosting your productivity.
+Ellah is a powerful command line interface (CLI) tool designed to synchronize scripts and aliases across multiple devices. It allows users to add, remove, execute, and manage files via a simple and intuitive set of commands. With Ellah, you can make your development setup consistent across all your machines, simplifying your workflow and boosting your productivity.
 
 # Upcoming
 
@@ -31,7 +31,7 @@ Developers often deal with repetitive setup processes across different operating
 
 With Ellah, you can:
 
--  Sync your scripts, images, links, and more across all devices, regardless of the OS.
+-  Sync your scripts and aliases all devices, regardless of the OS.
 -  Automatically add scripts and aliases to your OS-specific profile or maintain default aliases across all platforms.
 -  Run cloud-stored scripts directly from your command line, including bash scripts on a Windows machine.
 -  Easily manage resources with quick commands.
@@ -225,35 +225,6 @@ Here are some examples:
 
    ```bash
    ellah script origin script.sh
-   ```
-
--  To add a link (provide a unique link name for easier management):
-
-   ```bash
-   ellah link add example.com myLinkName
-   ```
-
--  To open a link:
-
-   ```bash
-   ellah link open example.com
-   ```
-
--  To open a link by its unique name:
-
-   ```bash
-   ellah link open myLinkName
-   ```
-
--  To remove a link:
-
-   ```bash
-   ellah link remove example.com
-   ```
-
--  To remove a link by its name:
-   ```bash
-   ellah link remove myLinkName
    ```
 
 For a complete list of commands and their explanations, please refer to the Commands section.
