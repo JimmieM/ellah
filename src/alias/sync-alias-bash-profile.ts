@@ -1,13 +1,44 @@
+import fs, { Dirent } from 'fs';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
-import { bashProfilePath, reloadBashProfile } from '../bash/bash.util.js';
+import {
+   bashProfilePath,
+   getBashSourceScriptForOS,
+   reloadBashProfile,
+} from '../bash/bash.util.js';
+import { getCurrentOS } from '../os/os.util.js';
 
-const baseDir = path.join(os.homedir(), '.ellah-cli');
+const ellahCliDir = '.ellah-cli';
+
+const baseDir = path.join(os.homedir(), ellahCliDir);
 
 const ellahAliasFile = 'alias.sh';
 
 const ellahAlias = path.join(baseDir, '/alias');
+
+const escapeRegExp = (str: string) => {
+   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+};
+
+const replaceAll = (str: string, find: string, replace: string): string => {
+   return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+};
+
+const drillFilesInDir = (dirPath: string): string[] => {
+   const entries: Dirent[] = fs.readdirSync(dirPath, { withFileTypes: true });
+
+   const filePaths: string[] = entries.flatMap((entry: Dirent) => {
+      const fullPath: string = path.join(dirPath, entry.name);
+
+      if (entry.isDirectory()) {
+         return drillFilesInDir(fullPath);
+      } else {
+         return fullPath;
+      }
+   });
+
+   return filePaths;
+};
 
 export const syncBashProfileWithAliasDir = () => {
    // Create the ellah-alias directory if it does not exist
@@ -20,15 +51,28 @@ export const syncBashProfileWithAliasDir = () => {
       );
    }
 
-   const files = fs.readdirSync(ellahAlias);
+   const files = drillFilesInDir(ellahAlias);
 
    if (!files || files?.length === 0) {
       console.log('No alias files to add to bash_profile.');
       return;
    }
 
-   const linesToAdd = files
-      .map((file) => `source ${ellahAlias}/${file}`)
+   const filesWithRelativePaths = files.map((file) => {
+      return replaceAll(replaceAll(file, ellahAlias, ''), '//', '/');
+   });
+
+   const currentOs = getCurrentOS();
+
+   const linesToAdd = filesWithRelativePaths
+      .map((file) => {
+         const inlineBashScript = getBashSourceScriptForOS(
+            currentOs,
+            `${ellahCliDir}/alias/${file}`,
+         );
+
+         return inlineBashScript;
+      })
       .join('\n');
 
    fs.readFile(bashProfilePath, 'utf8', (err, data) => {
@@ -37,15 +81,14 @@ export const syncBashProfileWithAliasDir = () => {
          return;
       }
 
-      const startMarker =
-         '# --- ELLAH START (do not add lines between start and end as these will be overriden. Instead use the CLI. ellah alias --help) ---';
+      const startMarker = '# --- ELLAH START ---';
       const endMarker = '# --- ELLAH END ---';
 
       let startIndex = data.indexOf(startMarker);
       let endIndex = data.indexOf(endMarker);
 
       // If markers do not exist, add them at the end of the file
-      if (startIndex === -1 || endIndex === -1) {
+      if (startIndex === -1 && endIndex === -1) {
          data = `${data}\n${startMarker}\n${endMarker}\n`;
          startIndex = data.indexOf(startMarker);
          endIndex = data.indexOf(endMarker);
@@ -60,7 +103,7 @@ export const syncBashProfileWithAliasDir = () => {
             console.error('Error writing to bash profile:', writeErr);
          } else {
             console.log('Bash profile updated successfully.');
-            reloadBashProfile();
+            reloadBashProfile(currentOs);
          }
       });
    });

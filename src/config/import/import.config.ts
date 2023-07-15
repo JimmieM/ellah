@@ -1,9 +1,12 @@
 import { decrypt } from '../../crypto/aes-256.crypto.js';
 import getPassword from '../../input/get-password.prompt.js';
 import { readFile } from '../../util/file.util.js';
-import { saveConfig } from '../user-config.js';
+import { UserConfig } from '../user-config.model.js';
 
-export const importConfig = async (filePath: string): Promise<void> => {
+export const importConfig = async (
+   filePath: string,
+   saveConfig: (config: UserConfig) => void,
+): Promise<void> => {
    return new Promise(async (resolve, reject) => {
       const password = await getPassword(
          'Enter your password to decrypt and import your configuration file:',

@@ -58,6 +58,7 @@ export interface IFileBucketResponse {
    bucket?: string;
    key?: string;
    body?: Buffer | Uint8Array | Blob | string | any;
+   commonPrefixes?: any;
 }
 
 export interface ISourceFunctions {}
@@ -115,9 +116,9 @@ export class FileBucket implements IFileBucket {
                if (err) return rej(err);
 
                if (data?.Body) {
-                  res({ body: data.Body });
+                  return res({ body: data.Body });
                } else {
-                  rej('Data has no body');
+                  return rej('Data has no body');
                }
             },
          ),
@@ -134,10 +135,10 @@ export class FileBucket implements IFileBucket {
                CopySource: `${bucketToUse}/${copySource}`,
                Bucket: bucketToUse,
             },
-            (err: Error, data: any) => {
+            (err: Error) => {
                if (err) return reject(err);
 
-               resolve();
+               return resolve();
             },
          ),
       );
@@ -151,7 +152,10 @@ export class FileBucket implements IFileBucket {
                if (err) return rej(err);
 
                if (data?.Contents) {
-                  res({ body: data.Contents });
+                  res({
+                     body: data.Contents,
+                     commonPrefixes: data.CommonPrefixes,
+                  });
                } else {
                   rej('Data has no body');
                }

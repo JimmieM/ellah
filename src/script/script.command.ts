@@ -18,6 +18,7 @@ const createScriptCommand = createBaseEntityCommands(
       { command: 'cp' },
       { command: 'cat' },
       { command: 'origin' },
+      { command: 'clip' },
    ],
    hasStorageConfig,
 );

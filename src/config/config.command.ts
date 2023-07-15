@@ -5,6 +5,8 @@ import { importConfig } from './import/import.config.js';
 import { editorConfigTable } from './tables/editor-config.table.js';
 import { storageProviderTable } from './tables/storage-provider.table.js';
 import { loadConfig, saveConfig } from './user-config.js';
+import { configExist } from './user-config.util.js';
+import { confirmPrompt } from '../input/confirm.prompt.js';
 
 export const configCommand = new Command('config');
 
@@ -35,7 +37,8 @@ configCommand
          case 'provider':
             config.storage.provider = value;
             break;
-         default:
+         case 'editor':
+            config.editor.type = value;
             break;
       }
 
@@ -56,7 +59,22 @@ configCommand
    .description('Add a hashed config file')
    .action(async (filePath) => {
       try {
-         await importConfig(filePath);
+         const config = loadConfig();
+
+         if (!configExist(config)) {
+            await importConfig(filePath, saveConfig);
+         }
+
+         const awaitYesNo = await confirmPrompt(
+            'You already have an active config. This will override your current config. Do you want to continue?',
+         );
+
+         if (awaitYesNo) {
+            return await importConfig(filePath, saveConfig);
+         }
+
+         console.warn('Aborted import.');
+
          console.log('Configuration successfully imported');
       } catch (error) {
          console.warn(

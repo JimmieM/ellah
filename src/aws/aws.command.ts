@@ -1,6 +1,8 @@
 import { Command } from 'commander';
+import { getTildeCommandForOS } from '../bash/bash.util.js';
 import { loadConfig, saveConfig, setConfig } from '../config/user-config.js';
 import { UserConfig } from '../config/user-config.model.js';
+import { getCurrentOS } from '../os/os.util.js';
 import { createBucket } from './bucket/create-bucket.js';
 import { deleteBucket } from './bucket/delete-bucket.js';
 import { getBuckets } from './bucket/get-buckets.js';
@@ -155,7 +157,11 @@ awsCommand
 
 localAwsCredentials
    .command('ls')
-   .description('list stored config in ~/.aws/credentials')
+   .description(
+      `list stored config in ${getTildeCommandForOS(
+         getCurrentOS(),
+      )}/.aws/credentials`,
+   )
    .action(() => {
       const profiles = parseLocalAwsProfiles();
       console.table(profiles);
@@ -194,7 +200,9 @@ localAwsCredentials
          console.log(`You're now using ${profileName} keys with Ellah`);
       } catch (error) {
          console.warn(
-            'Failed to use configuration from ~/.aws/credentials:',
+            `Failed to use configuration from ${getTildeCommandForOS(
+               getCurrentOS(),
+            )}/.aws/credentials:`,
             profileName,
          );
       }
@@ -237,7 +245,9 @@ bucketCommand
 
             saveConfig(manipulatedConfig);
 
-            console.log(`Ellah is now using ${bucket}`);
+            console.log(
+               `Ellah is now using ${bucket} with region ${options.region}`,
+            );
          }
       } catch (error) {
          console.warn('Failed to add bucket: ', error);
