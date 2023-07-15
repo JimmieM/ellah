@@ -10,7 +10,7 @@ export const syncAliasDir = async (): Promise<void> => {
       return;
    }
 
-   removeFilesInDirRecursive(ellahAliasDir);
+   await removeFilesInDirRecursive(ellahAliasDir);
 
    const createFilesPromises = res.body.map(async (obj: any) => {
       const file = await filebucket.Get(obj.Key);

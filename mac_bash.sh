@@ -1,1 +1,0 @@
-alias testy="echo test"
