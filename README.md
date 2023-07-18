@@ -44,6 +44,17 @@ With Ellah, you can:
 npm install -g ellah
 ```
 
+Set default editor when editing files in ellah CLI. Default for unix is nano. If you're on windows and doesn't have nano or vim installed it defaults to notepad.
+Supported editors:
+
+-  nano
+-  vi
+-  notepad (default windows fallback)
+
+```console
+ellah config set editor [myEdtior]
+```
+
 ## Step 1
 
 ### Option 1 - Configure by using your local AWS IAM profile credentials (recommended for first time users with AWS configured)
@@ -180,6 +191,14 @@ Here are some examples:
 
    ```bash
     ellah alias ls --os win
+   ```
+
+   -  To create a new alias
+
+   ```bash
+    ellah alias new mySharedBashFile.sh
+    ellah alias new myMacFile.sh --os unix
+    ellah alias new myWinFile.sh --os win
    ```
 
 -  To add an alias
