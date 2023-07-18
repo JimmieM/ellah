@@ -2,15 +2,26 @@
 
 # Table of Contents
 
--  [Introduction](#introduction)
--  [Upcoming](#upcoming)
--  [Installation](#installation)
--  [Setup using export and import](#setup-using-export-and-import)
--  [Setup using AWS IAM](#setup-aws-iam)
--  [How to Use](#how-to-use)
--  [Contribution](#contribution)
--  [License](#license)
--  [Contact](#contact)
+- [Ellah: CLI for syncing developer resources and alias](#ellah-cli-for-syncing-developer-resources-and-alias)
+- [Table of Contents](#table-of-contents)
+- [Introduction](#introduction)
+- [Upcoming](#upcoming)
+  - [Backlog](#backlog)
+- [Why Ellah](#why-ellah)
+- [Installation](#installation)
+  - [Step 1](#step-1)
+    - [Option 1 - Configure by using your local AWS IAM profile credentials (recommended for first time users with AWS configured)](#option-1---configure-by-using-your-local-aws-iam-profile-credentials-recommended-for-first-time-users-with-aws-configured)
+    - [Option 2 - Setup using export and import (recommended to use this step if you're configuring for another computer)](#option-2---setup-using-export-and-import-recommended-to-use-this-step-if-youre-configuring-for-another-computer)
+    - [Option 3 - Manually set your accessKeyId and secretAccessKey](#option-3---manually-set-your-accesskeyid-and-secretaccesskey)
+  - [Step 2](#step-2)
+    - [Option 1 - Manually configure your S3 bucket](#option-1---manually-configure-your-s3-bucket)
+    - [Option 2 - Create and use a new S3 bucket](#option-2---create-and-use-a-new-s3-bucket)
+- [How to Use](#how-to-use)
+- [General examples](#general-examples)
+- [Alias](#alias)
+  - [Contribution](#contribution)
+  - [License](#license)
+  - [Contact](#contact)
 
 # Introduction
 
@@ -42,6 +53,17 @@ With Ellah, you can:
 
 ```console
 npm install -g ellah
+```
+
+Set default editor when editing files in ellah CLI. Default for unix is nano. If you're on windows and doesn't have nano or vim installed it defaults to notepad.
+Supported editors:
+
+-  nano
+-  vi
+-  notepad (default windows fallback)
+
+```console
+ellah config set editor [myEdtior]
 ```
 
 ## Step 1
@@ -180,6 +202,14 @@ Here are some examples:
 
    ```bash
     ellah alias ls --os win
+   ```
+
+   -  To create a new alias
+
+   ```bash
+    ellah alias new mySharedBashFile.sh
+    ellah alias new myMacFile.sh --os unix
+    ellah alias new myWinFile.sh --os win
    ```
 
 -  To add an alias

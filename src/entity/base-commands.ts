@@ -198,46 +198,69 @@ export const commandWithErrorHandlingAndMiddleware = <T>(
    requiredConfig?: (config: UserConfig) => boolean,
 ) => {
    return async (cmdWithActions: CommandWithActions<T>, cb: any) => {
-      const commandArgs = entityCommands[cmdWithActions.command].args;
+      throwIfRequiredConfigIsMissing(entity, requiredConfig, loadConfig);
+
+      const commandArgs = entityCommands[cmdWithActions.command]?.args || '';
+
       const commandIdentifiers =
-         entityCommands[cmdWithActions.command].identifiers;
-      const commandOptions = entityCommands[cmdWithActions.command].options;
+         entityCommands[cmdWithActions.command]?.identifiers;
 
-      const subCommand = cmd.command(`${commandIdentifiers[0]} ${commandArgs}`);
+      const commandOptions = entityCommands[cmdWithActions.command]?.options;
 
-      if (commandOptions) {
-         commandOptions.forEach((option) =>
-            subCommand.option(option.flags, option.description),
+      commandIdentifiers.forEach((cmdId) => {
+         createCommand(
+            cmd,
+            cmdId,
+            commandArgs,
+            commandOptions,
+            cmdWithActions,
+            cb,
          );
-      }
-
-      commandIdentifiers.slice(1).forEach((alias) => {
-         subCommand.alias(alias + ' ' + commandArgs);
-      });
-
-      subCommand.action(async (...args) => {
-         try {
-            throwIfRequiredConfigIsMissing(entity, requiredConfig, loadConfig);
-
-            updateSpinnerText('Processing ...');
-
-            console.log();
-
-            await cb(...args);
-
-            console.log();
-
-            await cmdWithActions.onSuccess?.();
-
-            spinnerSuccess();
-         } catch (error) {
-            console.warn(error);
-            await cmdWithActions.onFail?.(error);
-         } finally {
-            stopSpinner();
-         }
       });
    };
+};
+
+const createCommand = <T>(
+   cmd: any,
+   commandId: string,
+   commandArgs: string,
+   commandOptions:
+      | {
+           flags: string;
+           description: string;
+        }[]
+      | undefined,
+   cmdWithActions: CommandWithActions<T>,
+   cb: any,
+) => {
+   const subCommand = cmd.command(`${commandId} ${commandArgs}`);
+
+   if (commandOptions) {
+      commandOptions.forEach((option) =>
+         subCommand.option(option.flags, option.description),
+      );
+   }
+
+   subCommand.action(async (...args: any) => {
+      try {
+         updateSpinnerText('Processing ...');
+
+         console.log();
+
+         await cb(...args);
+
+         console.log();
+
+         await cmdWithActions.onSuccess?.();
+
+         spinnerSuccess();
+      } catch (error) {
+         console.warn(error);
+         await cmdWithActions.onFail?.(error);
+      } finally {
+         stopSpinner();
+      }
+   });
 };
 
 const pipeFilePathAsyncOrDefault = async <T>(
@@ -325,6 +348,8 @@ export const createBaseEntityCommands = <T>(
       bindCommand(
          hasRm,
          async (file: string, options: Record<string, string>) => {
+            stopSpinner();
+
             const filePath = await pipeFilePathAsyncOrDefault(
                hasRm,
                file,
