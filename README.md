@@ -107,7 +107,7 @@ After running export you'll be prompted to enter a password to encrypt the conte
 ellah config export ./path/to/export
 ```
 
-After runnig import you'll be prompted to enter your password in order to decrypt the contents.
+After running import you'll be prompted to enter your password in order to decrypt the contents.
 
 ```bash
 ellah config import ./path/to/export/config.enc
